@@ -1,0 +1,260 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    --primary: 205 85% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 205 80% 92%;
+    --primary-dark: 205 85% 35%;
+
+    --secondary: 170 45% 45%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-light: 170 40% 92%;
+
+    --accent: 150 50% 45%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 150 45% 92%;
+
+    --muted: 210 25% 95%;
+    --muted-foreground: 215 15% 45%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 205 85% 45%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 215 30% 12%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 205 85% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 25% 18%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 215 25% 20%;
+    --sidebar-ring: 205 85% 55%;
+
+    --success: 150 60% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 205 85% 55%;
+    --info-foreground: 0 0% 100%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(205 85% 45%), hsl(170 45% 45%));
+    --gradient-hero: linear-gradient(135deg, hsl(215 30% 12%), hsl(205 85% 35%));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 98%));
+    --gradient-accent: linear-gradient(135deg, hsl(150 50% 45%), hsl(170 45% 45%));
+
+    --shadow-sm: 0 1px 2px 0 hsl(215 25% 15% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(215 25% 15% / 0.1), 0 2px 4px -2px hsl(215 25% 15% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(215 25% 15% / 0.1), 0 4px 6px -4px hsl(215 25% 15% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(215 25% 15% / 0.1), 0 8px 10px -6px hsl(215 25% 15% / 0.1);
+    --shadow-glow: 0 0 30px hsl(205 85% 45% / 0.3);
+  }
+
+  .dark {
+    --background: 215 30% 8%;
+    --foreground: 210 20% 95%;
+
+    --card: 215 28% 12%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 215 28% 12%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 205 85% 55%;
+    --primary-foreground: 215 30% 8%;
+    --primary-light: 205 80% 20%;
+    --primary-dark: 205 85% 65%;
+
+    --secondary: 170 45% 50%;
+    --secondary-foreground: 215 30% 8%;
+    --secondary-light: 170 40% 15%;
+
+    --accent: 150 50% 50%;
+    --accent-foreground: 215 30% 8%;
+    --accent-light: 150 45% 15%;
+
+    --muted: 215 25% 15%;
+    --muted-foreground: 215 15% 60%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 25% 18%;
+    --input: 215 25% 18%;
+    --ring: 205 85% 55%;
+
+    --sidebar-background: 215 32% 6%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 205 85% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 28% 12%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 215 25% 15%;
+    --sidebar-ring: 205 85% 55%;
+
+    --success: 150 60% 50%;
+    --warning: 38 92% 55%;
+    --info: 205 85% 60%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(215 32% 6%), hsl(205 85% 25%));
+    --shadow-glow: 0 0 30px hsl(205 85% 55% / 0.2);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-primary);
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
+  }
+
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.4s ease-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.5s ease-out forwards;
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.5s ease-out forwards;
+  }
+
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+  .stagger-4 { animation-delay: 0.4s; }
+  .stagger-5 { animation-delay: 0.5s; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(205 85% 45% / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px hsl(205 85% 45% / 0.5);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}

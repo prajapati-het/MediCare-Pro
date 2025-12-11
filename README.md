@@ -1,1 +1,1 @@
-# MediCare-Pro
+Hospital Management System
