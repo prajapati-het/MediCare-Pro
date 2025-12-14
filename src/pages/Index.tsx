@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
   ArrowRight, 
   Shield, 
@@ -8,19 +8,24 @@ import {
   Users, 
   Clock,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
 import { IntroLoader } from '@/components/IntroLoader';
 import { HospitalSlideshow } from '@/components/HospitalSlideshow';
 import { DashboardPreview } from '@/components/DashboardPreview';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/redux/store";
+import { logout as logoutAction } from "@/redux/slices/appSlice";
 
 const features = [
   {
     icon: Shield,
     title: 'Role-Based Access',
-    description: 'Secure multi-level access control for super admins and hospital administrators.',
+    description: 'Secure multi-level access control for admins and doctors.',
   },
   {
     icon: BarChart3,
@@ -42,6 +47,12 @@ const features = [
 export default function Index() {
   const [showIntro, setShowIntro] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
+  const dispatch = useDispatch();
+  const { user, isLoggedIn } = useSelector(
+    (state: RootState) => state.app
+  );
+  const navigate = useNavigate();
+  
 
   useEffect(() => {
     const hasSeenIntro = sessionStorage.getItem('intro_seen');
@@ -56,6 +67,14 @@ export default function Index() {
     sessionStorage.setItem('intro_seen', 'true');
     setShowIntro(false);
     setIntroComplete(true);
+  };
+
+  const handleNavigateWithAuth = () => {
+    if (isLoggedIn) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth');
+    }
   };
 
   if (showIntro) {
@@ -112,17 +131,27 @@ export default function Index() {
                 animate={introComplete ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <Link to="/auth">
-                  <Button variant="hero" size="xl" className="gap-2">
-                    Get Started
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button 
+                    variant="hero" 
+                    size="xl" 
+                    className="gap-2"
+                    onClick={handleNavigateWithAuth}
+                  >
+                    <Calendar className="w-5 h-5" />
+                    Book Appointments
                     <ArrowRight className="w-5 h-5" />
                   </Button>
-                </Link>
-                <Link to="/dashboard">
-                  <Button variant="outline" size="xl">
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button 
+                    variant="outline" 
+                    size="xl"
+                    onClick={handleNavigateWithAuth}
+                  >
                     View Dashboard
                   </Button>
-                </Link>
+                </motion.div>
               </motion.div>
 
               <motion.div
@@ -137,10 +166,15 @@ export default function Index() {
                   { value: '50K+', label: 'Patients' },
                   { value: '99.9%', label: 'Uptime' },
                 ].map((stat) => (
-                  <div key={stat.label} className="text-center">
+                  <motion.div 
+                    key={stat.label} 
+                    className="text-center"
+                    whileHover={{ scale: 1.1, y: -5 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
                     <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  </div>
+                  </motion.div>
                 ))}
               </motion.div>
             </div>
@@ -199,10 +233,15 @@ export default function Index() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02, y: -5 }}
                 >
-                  <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4">
+                  <motion.div 
+                    className="p-3 rounded-xl bg-primary/10 w-fit mb-4"
+                    whileHover={{ rotate: 10, scale: 1.1 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
                     <feature.icon className="w-6 h-6 text-primary" />
-                  </div>
+                  </motion.div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
                   <p className="text-sm text-muted-foreground">{feature.description}</p>
                 </motion.div>
@@ -248,23 +287,34 @@ export default function Index() {
                   Join hundreds of healthcare facilities already using MediCare Pro to streamline their operations.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link to="/auth">
-                    <Button variant="glass" size="lg" className="gap-2">
-                      Start Free Trial
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button 
+                      variant="glass" 
+                      size="lg" 
+                      className="gap-2"
+                      onClick={handleNavigateWithAuth}
+                    >
+                      Get Started
                       <ArrowRight className="w-4 h-4" />
                     </Button>
-                  </Link>
-                  <Button variant="hero-outline" size="lg">
-                    Schedule Demo
-                  </Button>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button variant="hero-outline" size="lg">
+                      Schedule Demo
+                    </Button>
+                  </motion.div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-6 mt-8">
                   {['No credit card required', 'Free 14-day trial', '24/7 Support'].map((item) => (
-                    <div key={item} className="flex items-center gap-2 text-primary-foreground/80 text-sm">
+                    <motion.div 
+                      key={item} 
+                      className="flex items-center gap-2 text-primary-foreground/80 text-sm"
+                      whileHover={{ scale: 1.05 }}
+                    >
                       <CheckCircle2 className="w-4 h-4" />
                       <span>{item}</span>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>

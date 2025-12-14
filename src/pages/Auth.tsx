@@ -8,13 +8,26 @@ import {
   Eye, 
   EyeOff, 
   ArrowRight,
-  Loader2
+  Loader2,
+  Stethoscope
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { getDoctorMapping, getHospitalForAdminHandle, normalizeAdminHandle, normalizeDoctorHandle } from '@/data/userMappings';
+import { useDispatch, useSelector } from "react-redux";
+import {
+  updateCurrentUser,
+  updateIsLoggedIn,
+  updateLoginMethod,
+} from "@/redux/slices/appSlice";
+import { DoctorType, AdminType } from "@/types/type";
+import { RootState } from '@/redux/store';
+import { appendUser } from '@/redux/slices/UserSlice';
+import Dashboard from './Dashboard';
+
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -24,52 +37,123 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  
+  const dispatch = useDispatch();
+  const users = useSelector((state: RootState) => state.user.users);
 
-  const { login, loginWithGoogle } = useAuth();
+
+  //const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  // const handleSubmit = async (e: React.FormEvent) => {
 
-    try {
-      const success = await login(email, password);
-      if (success) {
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in.",
-        });
-        navigate('/dashboard');
-      } else {
-        toast({
-          title: "Authentication failed",
-          description: "Please check your credentials and try again.",
-          variant: "destructive",
-        });
+
+
+  //   e.preventDefault();
+  //   setIsLoading(true);
+
+  //   try {
+  //     const success = await login(email, password);
+  //     if (success) {
+  //       toast({
+  //         title: "Welcome back!",
+  //         description: "You have successfully signed in.",
+  //       });
+  //       navigate(getLandingPath(email));
+  //     } else {
+  //       toast({
+  //         title: "Authentication failed",
+  //         description: "Please check your credentials and try again.",
+  //         variant: "destructive",
+  //       });
+  //     }
+  //   } catch (error) {
+  //     toast({
+  //       title: "Error",
+  //       description: "An unexpected error occurred.",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+
+  try {
+    const usernameRaw = email.split("@")[0].toLowerCase();
+
+    const isAdmin = usernameRaw.endsWith("adm");
+    const isDoctor = usernameRaw.startsWith("dr");
+    const role: 'admin' | 'doctor' = isAdmin ? 'admin' : 'doctor';
+
+
+    const normalizedUsername = isAdmin
+      ? normalizeAdminHandle(usernameRaw)
+      : normalizeDoctorHandle(usernameRaw);
+
+    const existingUser = users.find(
+      u => u.email.toLowerCase() === email.toLowerCase()
+    );
+
+    if (!existingUser) {
+      if (isAdmin) {
+        const hospital = getHospitalForAdminHandle(normalizedUsername);
+        if (!hospital) throw new Error("Invalid admin");
+
+        dispatch(
+          appendUser({
+            username: normalizedUsername,
+            email,
+            hospital: hospital.id,
+            role
+          })
+        );
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
     }
-  };
+
+    const loggedInUser =
+      existingUser ??
+      users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+    if (!loggedInUser) throw new Error("Login failed");
+
+    dispatch(updateCurrentUser(loggedInUser));
+    dispatch(updateIsLoggedIn(true));
+
+    navigate(
+      isAdmin
+        ? `/hospitals/${loggedInUser.hospital}`
+        : `/dashboard`
+    );
+
+  } catch {
+    toast({
+      title: "Authentication failed",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
 
   const handleGoogleLogin = async () => {
-    setIsGoogleLoading(true);
+    // setIsGoogleLoading(true);
     try {
-      const success = await loginWithGoogle();
-      if (success) {
-        toast({
-          title: "Welcome!",
-          description: "You have successfully signed in with Google.",
-        });
-        navigate('/dashboard');
-      }
+      // const success = await loginWithGoogle();
+      // if (success) {
+      //   toast({
+      //     title: "Welcome!",
+      //     description: "You have successfully signed in with Google.",
+      //   });
+      //   navigate('/hospitals/city-general');
+      // }
     } catch (error) {
       toast({
         title: "Error",
@@ -287,7 +371,7 @@ export default function Auth() {
             animate={{ rotate: [0, 5, -5, 0] }}
             transition={{ duration: 4, repeat: Infinity }}
           >
-            <Building2 className="w-16 h-16 text-primary-foreground" />
+            <Stethoscope className="w-16 h-16 text-primary-foreground" />
           </motion.div>
           
           <h2 className="text-3xl font-bold text-primary-foreground mb-4">
@@ -301,4 +385,17 @@ export default function Auth() {
       </div>
     </div>
   );
+}
+
+function getLandingPath(email: string) {
+  const username = email.split('@')[0].toLowerCase();
+  if (username.endsWith('adn')) {
+    const hospital = getHospitalForAdminHandle(normalizeAdminHandle(username));
+    return hospital ? `/hospitals/${hospital.id}` : '/dashboard';
+  }
+  if (username.startsWith('dr')) {
+    const doctor = getDoctorMapping(normalizeDoctorHandle(username));
+    return doctor ? '/doctor/profile' : '/doctor/appointments';
+  }
+  return '/dashboard';
 }

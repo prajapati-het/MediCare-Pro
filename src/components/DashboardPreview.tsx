@@ -83,7 +83,7 @@ export function DashboardPreview() {
               <span>Live Data</span>
             </div>
           </div>
-
+   
           <div className="h-48 flex items-end justify-between gap-2">
             {[65, 45, 80, 55, 90, 70, 85].map((height, index) => (
               <motion.div

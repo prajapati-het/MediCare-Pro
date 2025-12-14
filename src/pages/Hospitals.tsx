@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Building2, 
@@ -27,79 +27,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/contexts/AuthContext';
-
-const hospitals = [
-  {
-    id: 1,
-    name: 'City General Hospital',
-    location: 'Downtown District, 123 Main St',
-    beds: 450,
-    doctors: 85,
-    staff: 1200,
-    patients: 3245,
-    occupancy: 78,
-    rating: 4.8,
-    status: 'active',
-  },
-  {
-    id: 2,
-    name: 'Metro Health Center',
-    location: 'Westside Avenue, 456 Park Blvd',
-    beds: 320,
-    doctors: 72,
-    staff: 850,
-    patients: 2876,
-    occupancy: 85,
-    rating: 4.6,
-    status: 'active',
-  },
-  {
-    id: 3,
-    name: 'Sunrise Medical Complex',
-    location: 'Eastside Boulevard, 789 Oak Lane',
-    beds: 280,
-    doctors: 58,
-    staff: 720,
-    patients: 2134,
-    occupancy: 65,
-    rating: 4.7,
-    status: 'active',
-  },
-  {
-    id: 4,
-    name: 'Valley Regional Hospital',
-    location: 'Northern Hills, 321 Valley Rd',
-    beds: 200,
-    doctors: 42,
-    staff: 540,
-    patients: 1567,
-    occupancy: 72,
-    rating: 4.5,
-    status: 'active',
-  },
-  {
-    id: 5,
-    name: 'Coastal Care Medical',
-    location: 'Seaside District, 654 Beach Ave',
-    beds: 180,
-    doctors: 38,
-    staff: 480,
-    patients: 1234,
-    occupancy: 58,
-    rating: 4.4,
-    status: 'maintenance',
-  },
-];
+import { useHospitals } from '@/contexts/HospitalsContext';
 
 export default function Hospitals() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { hospitals } = useHospitals();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredHospitals = hospitals.filter(h => 
-    h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    h.location.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredHospitals = useMemo(
+    () =>
+      hospitals.filter(
+        (h) =>
+          h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          h.location.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [hospitals, searchQuery]
   );
+  const totalBeds = useMemo(() => hospitals.reduce((sum, h) => sum + h.beds, 0), [hospitals]);
+  const totalDoctors = useMemo(() => hospitals.reduce((sum, h) => sum + h.doctors, 0), [hospitals]);
+  const totalPatients = useMemo(() => hospitals.reduce((sum, h) => sum + h.patients, 0), [hospitals]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -115,13 +62,13 @@ export default function Hospitals() {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background">
       <Header />
       
       <div className="flex min-h-[calc(100vh-4rem)]">
         <DashboardSidebar />
         
-        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 overflow-x-hidden">
+        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 overflow-x-auto">
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -137,7 +84,7 @@ export default function Hospitals() {
                 </p>
               </div>
               
-              {user?.role === 'super_admin' && (
+              {user?.role === 'admin' && (
                 <Button className="gap-2" onClick={() => navigate('/hospitals/add')}>
                   <Plus className="w-4 h-4" />
                   Add Hospital
@@ -178,7 +125,7 @@ export default function Hospitals() {
                       <Bed className="w-5 h-5 text-secondary" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">1,430</p>
+                      <p className="text-2xl font-bold text-foreground">{totalBeds}</p>
                       <p className="text-xs text-muted-foreground">Total Beds</p>
                     </div>
                   </div>
@@ -191,7 +138,7 @@ export default function Hospitals() {
                       <Stethoscope className="w-5 h-5 text-accent" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">295</p>
+                      <p className="text-2xl font-bold text-foreground">{totalDoctors}</p>
                       <p className="text-xs text-muted-foreground">Total Doctors</p>
                     </div>
                   </div>
@@ -204,7 +151,7 @@ export default function Hospitals() {
                       <Users className="w-5 h-5 text-success" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">11K+</p>
+                      <p className="text-2xl font-bold text-foreground">{totalPatients}</p>
                       <p className="text-xs text-muted-foreground">Patients</p>
                     </div>
                   </div>
@@ -247,7 +194,7 @@ export default function Hospitals() {
                               <Eye className="w-4 h-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/hospitals/${hospital.id}/edit`)}>
                               <Edit className="w-4 h-4 mr-2" />
                               Edit
                             </DropdownMenuItem>

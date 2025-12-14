@@ -70,13 +70,13 @@ export default function Doctors() {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background">
       <Header />
       
       <div className="flex min-h-[calc(100vh-4rem)]">
         <DashboardSidebar />
         
-        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 overflow-x-hidden">
+        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 overflow-x-auto">
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -163,7 +163,7 @@ export default function Doctors() {
                               <Calendar className="w-4 h-4 mr-2" />
                               Schedule
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate(`/admin/doctors/${doctor.id}/edit`)}>
                               <Edit className="w-4 h-4 mr-2" />
                               Edit
                             </DropdownMenuItem>

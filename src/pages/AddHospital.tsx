@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
+import { useHospitals } from '@/contexts/HospitalsContext';
 import { z } from 'zod';
 
 const hospitalSchema = z.object({
@@ -51,6 +52,7 @@ type HospitalFormData = z.infer<typeof hospitalSchema>;
 export default function AddHospital() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { addHospital } = useHospitals();
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof HospitalFormData, string>>>({});
   
@@ -85,7 +87,26 @@ export default function AddHospital() {
     try {
       const validatedData = hospitalSchema.parse(formData);
       
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      addHospital({
+        name: validatedData.name,
+        type: validatedData.type,
+        location: `${validatedData.address}, ${validatedData.city}`,
+        city: validatedData.city,
+        state: validatedData.state,
+        zipCode: validatedData.zipCode,
+        phone: validatedData.phone,
+        email: validatedData.email,
+        website: validatedData.website || '',
+        beds: validatedData.totalBeds,
+        doctors: 0,
+        staff: 0,
+        nurses: 0,
+        establishedYear: new Date().getFullYear(),
+        accreditation: validatedData.type,
+        specialties: [],
+        description: validatedData.description || '',
+        address: validatedData.address,
+      });
       
       toast({
         title: "Hospital Added Successfully",
@@ -114,13 +135,13 @@ export default function AddHospital() {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background">
       <Header />
       
       <div className="flex min-h-[calc(100vh-4rem)]">
         <DashboardSidebar />
         
-        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 overflow-x-hidden">
+        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 overflow-x-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

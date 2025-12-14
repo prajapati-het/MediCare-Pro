@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Building2, 
@@ -32,32 +33,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-
-const hospitalData = {
-  id: 1,
-  name: 'City General Hospital',
-  type: 'General Hospital',
-  address: '123 Healthcare Avenue',
-  city: 'New York',
-  state: 'NY',
-  zipCode: '10001',
-  phone: '+1 (555) 123-4567',
-  email: 'contact@citygeneral.com',
-  website: 'https://citygeneral.com',
-  totalBeds: 450,
-  availableBeds: 89,
-  icuBeds: 40,
-  doctors: 85,
-  nurses: 320,
-  staff: 795,
-  occupancy: 78,
-  rating: 4.8,
-  status: 'active',
-  establishedYear: 1985,
-  accreditation: 'JCI Accredited',
-  specialties: ['Cardiology', 'Neurology', 'Oncology', 'Orthopedics', 'Pediatrics'],
-  description: 'City General Hospital is a leading healthcare facility providing comprehensive medical services with state-of-the-art technology and a team of experienced healthcare professionals.',
-};
+import { useHospitals } from '@/contexts/HospitalsContext';
 
 const weeklyPatients = [
   { day: 'Mon', patients: 145 },
@@ -79,15 +55,18 @@ const recentActivities = [
 export default function HospitalDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { hospitals, getHospitalById } = useHospitals();
+
+  const hospitalData = useMemo(() => getHospitalById(id || "") || hospitals[0], [getHospitalById, hospitals, id]);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background">
       <Header />
       
       <div className="flex min-h-[calc(100vh-4rem)]">
         <DashboardSidebar />
         
-        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 overflow-x-hidden">
+        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 overflow-x-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -103,11 +82,11 @@ export default function HospitalDetail() {
                     <Building2 className="w-8 h-8 text-primary-foreground" />
                   </div>
                   <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{hospitalData.name}</h1>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{hospitalData?.name}</h1>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <MapPin className="w-4 h-4" />
-                      <span>{hospitalData.city}, {hospitalData.state}</span>
-                      <Badge variant="outline" className="ml-2">{hospitalData.type}</Badge>
+                      <span>{hospitalData?.city}, {hospitalData?.state}</span>
+                      <Badge variant="outline" className="ml-2">{hospitalData?.type}</Badge>
                     </div>
                   </div>
                 </div>
@@ -126,7 +105,7 @@ export default function HospitalDetail() {
                       <Bed className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{hospitalData.totalBeds}</p>
+                      <p className="text-2xl font-bold text-foreground">{hospitalData?.beds}</p>
                       <p className="text-xs text-muted-foreground">Total Beds</p>
                     </div>
                   </div>
@@ -139,7 +118,7 @@ export default function HospitalDetail() {
                       <Stethoscope className="w-5 h-5 text-secondary" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{hospitalData.doctors}</p>
+                      <p className="text-2xl font-bold text-foreground">{hospitalData?.doctors}</p>
                       <p className="text-xs text-muted-foreground">Doctors</p>
                     </div>
                   </div>
@@ -152,7 +131,7 @@ export default function HospitalDetail() {
                       <Users className="w-5 h-5 text-accent" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{hospitalData.nurses}</p>
+                      <p className="text-2xl font-bold text-foreground">{hospitalData?.nurses}</p>
                       <p className="text-xs text-muted-foreground">Nurses</p>
                     </div>
                   </div>
@@ -165,7 +144,7 @@ export default function HospitalDetail() {
                       <TrendingUp className="w-5 h-5 text-success" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{hospitalData.rating}</p>
+                      <p className="text-2xl font-bold text-foreground">{hospitalData?.rating}</p>
                       <p className="text-xs text-muted-foreground">Rating</p>
                     </div>
                   </div>
@@ -180,9 +159,9 @@ export default function HospitalDetail() {
                     <CardTitle>About</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground mb-4">{hospitalData.description}</p>
+                    <p className="text-muted-foreground mb-4">{hospitalData?.description}</p>
                     <div className="flex flex-wrap gap-2">
-                      {hospitalData.specialties.map(specialty => (
+                      {hospitalData?.specialties?.map(specialty => (
                         <Badge key={specialty} variant="secondary">{specialty}</Badge>
                       ))}
                     </div>
@@ -198,9 +177,9 @@ export default function HospitalDetail() {
                       <div>
                         <div className="flex justify-between text-sm mb-2">
                           <span className="text-muted-foreground">General Beds</span>
-                          <span className="font-medium">{hospitalData.occupancy}%</span>
+                          <span className="font-medium">{hospitalData?.occupancy}%</span>
                         </div>
-                        <Progress value={hospitalData.occupancy} className="h-2" />
+                        <Progress value={hospitalData?.occupancy} className="h-2" />
                       </div>
                       <div>
                         <div className="flex justify-between text-sm mb-2">
@@ -253,22 +232,22 @@ export default function HospitalDetail() {
                     <div className="flex items-center gap-3">
                       <MapPin className="w-4 h-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm text-foreground">{hospitalData.address}</p>
-                        <p className="text-sm text-muted-foreground">{hospitalData.city}, {hospitalData.state} {hospitalData.zipCode}</p>
+                        <p className="text-sm text-foreground">{hospitalData?.address}</p>
+                        <p className="text-sm text-muted-foreground">{hospitalData?.city}, {hospitalData?.state} {hospitalData?.zipCode}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{hospitalData.phone}</span>
+                      <span className="text-sm">{hospitalData?.phone}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Mail className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{hospitalData.email}</span>
+                      <span className="text-sm">{hospitalData?.email}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Globe className="w-4 h-4 text-muted-foreground" />
-                      <a href={hospitalData.website} className="text-sm text-primary hover:underline" target="_blank" rel="noreferrer">
-                        {hospitalData.website}
+                      <a href={hospitalData?.website} className="text-sm text-primary hover:underline" target="_blank" rel="noreferrer">
+                        {hospitalData?.website}
                       </a>
                     </div>
                   </CardContent>
@@ -281,19 +260,21 @@ export default function HospitalDetail() {
                   <CardContent className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Established</span>
-                      <span className="font-medium">{hospitalData.establishedYear}</span>
+                      <span className="font-medium">{hospitalData?.establishedYear}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Status</span>
-                      <Badge className="bg-success text-success-foreground">{hospitalData.status}</Badge>
+                      <Badge className={hospitalData?.status === 'active' ? 'bg-success text-success-foreground' : 'bg-warning text-warning-foreground'}>
+                        {hospitalData?.status}
+                      </Badge>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Accreditation</span>
-                      <span className="font-medium text-sm">{hospitalData.accreditation}</span>
+                      <span className="font-medium text-sm">{hospitalData?.accreditation}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Total Staff</span>
-                      <span className="font-medium">{hospitalData.staff + hospitalData.doctors + hospitalData.nurses}</span>
+                      <span className="font-medium">{(hospitalData?.staff || 0) + (hospitalData?.doctors || 0) + (hospitalData?.nurses || 0)}</span>
                     </div>
                   </CardContent>
                 </Card>

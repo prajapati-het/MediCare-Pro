@@ -36,6 +36,10 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { getPatientsByDoctorId } from '@/data/patientsData';
+import { useMemo } from 'react';
 
 const statsCards = [
   { 
@@ -106,7 +110,15 @@ const upcomingAppointments = [
 ];
 
 export default function Dashboard() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isLoggedIn } = useSelector((state: RootState) => state.app);
+  const dispatch = useDispatch();
+
+  const patients = useMemo(() => {
+      if (user?.id) {
+        return getPatientsByDoctorId(user.id);
+      }
+      return [];
+    }, [user?.id]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -122,13 +134,13 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background">
       <Header />
       
       <div className="flex min-h-[calc(100vh-4rem)]">
-        {isAuthenticated && <DashboardSidebar />}
+        {isLoggedIn  && <DashboardSidebar />}
         
-        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 overflow-x-hidden">
+        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 overflow-x-auto">
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -136,13 +148,13 @@ export default function Dashboard() {
           >
             <motion.div variants={itemVariants} className="mb-8">
               <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                {user ? `Welcome back, ${user.name.split(' ')[0]}!` : 'Dashboard Overview'}
+                {user ? `Welcome back, ${user.username.split(' ')[0]}!` : 'Dashboard Overview'}
               </h1>
               <p className="text-muted-foreground">
-                {user?.role === 'super_admin' 
-                  ? 'Overview of all hospital branches and network performance'
-                  : user?.role === 'admin'
+                {user?.role === 'admin'
                   ? `Managing ${user.hospital || 'your hospital'}`
+                  : user?.role === 'doctor'
+                  ? `Welcome to ${user.hospital || 'your hospital'}`
                   : 'View hospital statistics and performance metrics'
                 }
               </p>
@@ -359,40 +371,6 @@ export default function Dashboard() {
               </Card>
             </motion.div>
 
-            {user?.role === 'super_admin' && (
-              <motion.div variants={itemVariants} className="mt-8">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Hospital Performance Comparison</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={[
-                        { name: 'City General', patients: 3200, doctors: 85, beds: 150 },
-                        { name: 'Metro Health', patients: 2800, doctors: 72, beds: 120 },
-                        { name: 'Sunrise Medical', patients: 2400, doctors: 58, beds: 100 },
-                        { name: 'Valley Regional', patients: 1800, doctors: 42, beds: 80 },
-                      ]}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(210, 20%, 90%)" />
-                        <XAxis dataKey="name" stroke="hsl(215, 15%, 45%)" fontSize={12} />
-                        <YAxis stroke="hsl(215, 15%, 45%)" fontSize={12} />
-                        <Tooltip 
-                          contentStyle={{ 
-                            background: 'hsl(0, 0%, 100%)', 
-                            border: '1px solid hsl(210, 20%, 90%)',
-                            borderRadius: '8px'
-                          }}
-                        />
-                        <Legend />
-                        <Bar dataKey="patients" name="Patients" fill="hsl(205, 85%, 45%)" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="doctors" name="Doctors" fill="hsl(170, 45%, 45%)" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="beds" name="Beds" fill="hsl(150, 50%, 45%)" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
           </motion.div>
         </main>
       </div>

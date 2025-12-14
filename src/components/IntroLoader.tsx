@@ -55,6 +55,7 @@ export function IntroLoader({ onComplete }: IntroLoaderProps) {
         </div>
 
         <div className="relative z-10 flex flex-col items-center">
+        
           <motion.div
             className="flex items-center gap-6 mb-8"
             initial={{ opacity: 0, y: 20 }}
@@ -97,7 +98,8 @@ export function IntroLoader({ onComplete }: IntroLoaderProps) {
             </motion.div>
           </motion.div>
 
-         <motion.div
+          
+          <motion.div
             className="flex items-center gap-4 mb-6"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}

@@ -1,14 +1,22 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  getDoctorMapping,
+  getHospitalForAdminHandle,
+  normalizeAdminHandle,
+  normalizeDoctorHandle,
+} from "@/data/userMappings";
 
-export type UserRole = 'super_admin' | 'admin' | 'guest';
+export type UserRole = 'admin' | 'doctor' | 'guest';
 
 export interface User {
   id: string;
   email: string;
   name: string;
   role: UserRole;
-  hospital?: string;
+  hospitalId?: string;
+  hospitalName?: string;
   avatar?: string;
+  doctorId?: number;
 }
 
 interface AuthContextType {
@@ -18,27 +26,30 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   loginWithGoogle: () => Promise<boolean>;
   logout: () => void;
-  setRole: (role: UserRole) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const DEMO_USERS: Record<string, User> = {
-  'super@hospital.com': {
-    id: '1',
-    email: 'super@hospital.com',
-    name: 'Dr. Sarah Mitchell',
-    role: 'super_admin',
-    avatar: undefined,
-  },
-  'admin@hospital.com': {
-    id: '2',
-    email: 'admin@hospital.com',
-    name: 'Dr. James Wilson',
-    role: 'admin',
-    hospital: 'City General Hospital',
-    avatar: undefined,
-  },
+// Helper function to detect role from email using requested prefixes
+const detectRoleFromEmail = (email: string): UserRole => {
+  const username = email.split("@")[0].toLowerCase();
+  if (username.endsWith("adn")) {
+    return "admin";
+  } else if (username.startsWith("dr")) {
+    return "doctor";
+  }
+  return "guest";
+};
+
+const buildDisplayName = (username: string, role: UserRole) => {
+  if (role === "admin") {
+    return normalizeAdminHandle(username) || "Admin";
+  }
+  if (role === "doctor") {
+    const cleaned = normalizeDoctorHandle(username);
+    return cleaned ? `Dr. ${cleaned.charAt(0).toUpperCase()}${cleaned.slice(1)}` : "Doctor";
+  }
+  return username || "User";
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -46,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored user session
+  
     const storedUser = localStorage.getItem('hospital_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -56,46 +67,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    // Simulate API call
+
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    const demoUser = DEMO_USERS[email.toLowerCase()];
-    if (demoUser && password.length >= 4) {
-      setUser(demoUser);
-      localStorage.setItem('hospital_user', JSON.stringify(demoUser));
+    if (!email.includes("@") || password.length < 4) {
       setIsLoading(false);
-      return true;
+      return false;
     }
-    
-    // For any other email, create a guest admin user
-    if (email.includes('@') && password.length >= 4) {
-      const newUser: User = {
-        id: Date.now().toString(),
-        email,
-        name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        role: 'admin',
-        hospital: 'Metro Health Center',
-      };
-      setUser(newUser);
-      localStorage.setItem('hospital_user', JSON.stringify(newUser));
+
+    const role = detectRoleFromEmail(email);
+    if (role === "guest") {
       setIsLoading(false);
-      return true;
+      return false;
     }
+
+    const username = email.split("@")[0];
+    const adminHandle = normalizeAdminHandle(username);
+    const doctorHandle = normalizeDoctorHandle(username);
+    const doctorMapping = role === "doctor" ? getDoctorMapping(doctorHandle) : undefined;
+    const hospital =
+      role === "admin"
+        ? getHospitalForAdminHandle(adminHandle)
+        : doctorMapping?.hospital;
+
+    const newUser: User = {
+      id: Date.now().toString(),
+      email,
+      name: buildDisplayName(username, role),
+      role,
+      hospitalId: hospital?.id,
+      hospitalName: hospital?.name,
+      doctorId: doctorMapping?.doctorId,
+    };
     
+    setUser(newUser);
+    localStorage.setItem('hospital_user', JSON.stringify(newUser));
     setIsLoading(false);
-    return false;
+    return true;
   };
 
   const loginWithGoogle = async (): Promise<boolean> => {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     
+
     const googleUser: User = {
       id: 'google_' + Date.now(),
-      email: 'user@gmail.com',
-      name: 'Google User',
+      email: 'admuser@hospital.com',
+      name: 'Admin User',
       role: 'admin',
-      hospital: 'Metro Health Center',
+      hospitalId: 'city-general',
+      hospitalName: 'City General Hospital',
     };
     setUser(googleUser);
     localStorage.setItem('hospital_user', JSON.stringify(googleUser));
@@ -108,14 +130,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('hospital_user');
   };
 
-  const setRole = (role: UserRole) => {
-    if (user) {
-      const updatedUser = { ...user, role };
-      setUser(updatedUser);
-      localStorage.setItem('hospital_user', JSON.stringify(updatedUser));
-    }
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -125,7 +139,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         loginWithGoogle,
         logout,
-        setRole,
       }}
     >
       {children}

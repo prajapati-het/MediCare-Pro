@@ -81,7 +81,7 @@ export function HospitalSlideshow() {
           />
           
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-foreground/40 to-transparent" />
-          
+    
           <motion.div
             className="absolute bottom-0 left-0 right-0 p-6 md:p-10"
             initial={{ opacity: 0, y: 30 }}
