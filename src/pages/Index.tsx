@@ -94,17 +94,6 @@ export default function Index() {
 
           <div className="container mx-auto px-4 lg:px-8 py-16 lg:py-24 relative">
             <div className="max-w-4xl mx-auto text-center mb-16">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={introComplete ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5 }}
-              >
-                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-                  <Sparkles className="w-4 h-4" />
-                  Next-Generation Healthcare Management
-                </span>
-              </motion.div>
-
               <motion.h1
                 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight"
                 initial={{ opacity: 0, y: 20 }}
@@ -140,16 +129,6 @@ export default function Index() {
                   >
                     <Calendar className="w-5 h-5" />
                     Book Appointments
-                    <ArrowRight className="w-5 h-5" />
-                  </Button>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button 
-                    variant="outline" 
-                    size="xl"
-                    onClick={handleNavigateWithAuth}
-                  >
-                    View Dashboard
                   </Button>
                 </motion.div>
               </motion.div>
@@ -270,7 +249,7 @@ export default function Index() {
           </div>
         </section>
 
-        <section className="py-16 lg:py-24">
+        {/* <section className="py-16 lg:py-24">
           <div className="container mx-auto px-4 lg:px-8">
             <motion.div
               className="relative overflow-hidden rounded-3xl p-8 md:p-12 lg:p-16"
@@ -325,13 +304,13 @@ export default function Index() {
               </div>
             </motion.div>
           </div>
-        </section>
+        </section> */}
 
         <footer className="py-12 border-t border-border">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <p className="text-sm text-muted-foreground">
-                © 2024 MediCare Pro. All rights reserved.
+                © 2025 MediCare Pro. All rights reserved.
               </p>
               <div className="flex items-center gap-6">
                 <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">

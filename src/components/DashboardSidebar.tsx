@@ -43,8 +43,8 @@ const adminMenuItems: SidebarItem[] = [
 
 const doctorMenuItems: SidebarItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Calendar, label: 'Appointments', path: '/doctor/appointments', roles: ['doctor'] },
-  { icon: ClipboardList, label: 'Pending Appointments', path: '/doctor/pending-appointments', roles: ['doctor'] },
+  { icon: Calendar, label: 'Today\'s Appointments', path: '/doctor/appointments', roles: ['doctor'] },
+  { icon: ClipboardList, label: 'Appointments', path: '/doctor/pending-appointments', roles: ['doctor'] },
   { icon: Users, label: 'My Patients', path: '/doctor/patients', roles: ['doctor'] },
   { icon: User, label: 'My Profile', path: '/doctor/profile', roles: ['doctor'] },
 ];

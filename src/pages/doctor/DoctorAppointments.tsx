@@ -1,30 +1,23 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Calendar, 
   Clock,
-  User,
   CheckCircle2,
-  Video
+  AlertCircle
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { doctorAppointments as appointments } from '@/data/doctorSamples';
-import {appointmentsData } from '@/data/appointmentsData';
-import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from "react-redux";
+//import { getAppointmentsByDoctorId } from '@/data/appointmentsData';
+import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { logout as logoutAction } from "@/redux/slices/appSlice";
+import { AppointmentCalendar } from '@/components/AppointmentCalendar';
+import { selectAppointmentsByDoctor } from '@/selectors/selectors';
+
 
 export default function DoctorAppointments() {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-
-  const { user, isLoggedIn } = useSelector(
-    (state: RootState) => state.app
-  );
+  const { user } = useSelector((state: RootState) => state.app);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -39,9 +32,19 @@ export default function DoctorAppointments() {
     visible: { opacity: 1, y: 0 },
   };
 
-  const todayAppointments = appointments.filter(
-  appt => /*appt.date === today && */ appt.doctorId === user.id
+  // Get appointments for the logged-in doctor
+  const appointments = useSelector(
+  user?.id ? selectAppointmentsByDoctor(user.id) : () => []
 );
+
+
+  const todayAppointments = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return appointments.filter(apt => apt.date === today);
+  }, [appointments]);
+
+  const pendingCount = appointments.filter(a => a.status === 'Pending').length;
+  const confirmedCount = appointments.filter(a => a.status === 'Confirmed').length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,120 +59,94 @@ export default function DoctorAppointments() {
             initial="hidden"
             animate="visible"
           >
+            {/* Page Header */}
             <motion.div variants={itemVariants} className="mb-8">
               <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                 My Appointments
               </h1>
               <p className="text-muted-foreground">
-                View and manage your scheduled appointments
+                View and manage your scheduled appointments using the calendar below
               </p>
             </motion.div>
 
+            {/* Stats Summary */}
             <motion.div 
               variants={itemVariants}
-              className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"
+              className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8"
             >
-              <Card>
+              <Card className="overflow-hidden">
                 <CardContent className="p-5">
-                  <div className="flex items-center gap-3">
+                  <motion.div 
+                    className="flex items-center gap-3"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
                     <div className="p-3 rounded-xl bg-primary/10">
                       <Calendar className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{todayAppointments.length}</p>
-                      <p className="text-sm text-muted-foreground">Today's Appointments</p>
+                      <p className="text-2xl font-bold text-foreground">{appointments.length}</p>
+                      <p className="text-sm text-muted-foreground">Total Appointments</p>
                     </div>
-                  </div>
+                  </motion.div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="overflow-hidden">
                 <CardContent className="p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-success/10">
-                      <CheckCircle2 className="w-6 h-6 text-success" />
+                  <motion.div 
+                    className="flex items-center gap-3"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <div className="p-3 rounded-xl bg-blue-500/10">
+                      <Clock className="w-6 h-6 text-blue-500" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">
-                        {todayAppointments.filter(a => a.status === 'Confirmed').length}
-                      </p>
+                      <p className="text-2xl font-bold text-foreground">{todayAppointments.length}</p>
+                      <p className="text-sm text-muted-foreground">Today</p>
+                    </div>
+                  </motion.div>
+                </CardContent>
+              </Card>
+              <Card className="overflow-hidden">
+                <CardContent className="p-5">
+                  <motion.div 
+                    className="flex items-center gap-3"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <div className="p-3 rounded-xl bg-emerald-500/10">
+                      <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{confirmedCount}</p>
                       <p className="text-sm text-muted-foreground">Confirmed</p>
                     </div>
-                  </div>
+                  </motion.div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="overflow-hidden">
                 <CardContent className="p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-secondary/10">
-                      <Clock className="w-6 h-6 text-secondary" />
+                  <motion.div 
+                    className="flex items-center gap-3"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <div className="p-3 rounded-xl bg-amber-500/10">
+                      <AlertCircle className="w-6 h-6 text-amber-500" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">
-                        {todayAppointments.filter(a => a.status === 'Upcoming').length}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Upcoming</p>
+                      <p className="text-2xl font-bold text-foreground">{pendingCount}</p>
+                      <p className="text-sm text-muted-foreground">Pending</p>
                     </div>
-                  </div>
+                  </motion.div>
                 </CardContent>
               </Card>
             </motion.div>
 
+            {/* Calendar */}
             <motion.div variants={itemVariants}>
-              <h2 className="text-lg font-semibold text-foreground mb-4">Today's Schedule</h2>
-              <div className="space-y-4">
-                {todayAppointments.map((appointment, index) => (
-                  <motion.div
-                    key={appointment.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground font-semibold">
-                              {appointment.patient.split(' ').map(n => n[0]).join('')}
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-foreground">{appointment.patient}</h3>
-                              <p className="text-sm text-muted-foreground">{appointment.notes}</p>
-                              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-4 h-4" />
-                                  {appointment.time}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  {appointment.type === 'Video Call' ? (
-                                    <Video className="w-4 h-4" />
-                                  ) : (
-                                    <User className="w-4 h-4" />
-                                  )}
-                                  {appointment.type}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={appointment.status === 'Confirmed' ? 'default' : 'secondary'}>
-                              {appointment.status}
-                            </Badge>
-                            <Button variant="outline" size="sm" onClick={() => navigate(`/doctor/appointments/${appointment.id}`)}>
-                              View Details
-                            </Button>
-                            {appointment.type === 'Video Call' && (
-                              <Button size="sm" className="gap-1">
-                                <Video className="w-4 h-4" />
-                                Join
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
+              <AppointmentCalendar appointments={appointments} />
             </motion.div>
           </motion.div>
         </main>
