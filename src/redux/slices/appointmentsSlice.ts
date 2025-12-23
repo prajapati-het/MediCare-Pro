@@ -10,7 +10,7 @@ export interface Appointment {
     time: string;
     date: string;
     type: 'Consultation' | 'Check-up' | 'Follow-up' | 'Video Call' | 'Surgery' | 'Lab Review';
-    status: 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled' | 'No Show';
+    status: 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled' | 'No Show' | 'Delayed';
     notes: string;
     duration: number;
     room: string;

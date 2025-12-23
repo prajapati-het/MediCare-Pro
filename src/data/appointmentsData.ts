@@ -57,18 +57,3 @@ export const appointmentsData: Appointment[] = [
   { id: 22, doctorId: 6, patientId: 13, patientName: "Richard Davis", time: "09:00 AM", date: "2025-12-18", type: "Lab Review", status: "Pending", notes: "Blood count results", duration: 20, room: "Room 501" },
   { id: 23, doctorId: 6, patientId: 14, patientName: "Sandra Johnson", time: "10:00 AM", date: "2025-12-22", type: "Video Call", status: "Pending", notes: "Hormone therapy check-in", duration: 20, room: "Virtual" }
 ];
-
-// // Helper function to get appointments by doctor ID
-// export const getAppointmentsByDoctorId = (doctorId: number): Appointment[] => {
-//   return appointmentsData.filter(appointment => appointment.doctorId === doctorId);
-// };
-
-// // Helper function to get pending appointments by doctor ID
-// export const getPendingAppointmentsByDoctorId = (doctorId: number): Appointment[] => {
-//   return appointmentsData.filter(appointment => appointment.doctorId === doctorId && appointment.status === 'Pending');
-// };
-
-// // Helper function to get appointment by ID
-// export const getAppointmentById = (appointmentId: number): Appointment | undefined => {
-//   return appointmentsData.find(appointment => appointment.id === appointmentId);
-// };

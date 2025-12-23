@@ -14,17 +14,19 @@ import {
   REGISTER,
 } from "redux-persist";
 import storage from "redux-persist/lib/storage";
+import patientsReducer from "./slices/patientsSlice";
 
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["app", "user","appointments"],
+  whitelist: ["app", "user","appointments","patients"],
 };
 
 const rootReducer = combineReducers({
   app: appReducer,    
   user: userReducer,   
-  appointments: appointmentsReducer
+  appointments: appointmentsReducer,
+  patients: patientsReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

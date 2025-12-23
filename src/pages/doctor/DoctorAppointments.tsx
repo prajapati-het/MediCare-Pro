@@ -13,7 +13,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { AppointmentCalendar } from '@/components/AppointmentCalendar';
-import { selectAppointmentsByDoctor } from '@/selectors/selectors';
+import { selectMonthlyAppointmentsByDoctor, selectTodayAppointmentsByDoctor } from '@/selectors/selectors';
+import { useAppSelector } from '@/redux/hooks';
 
 
 export default function DoctorAppointments() {
@@ -32,19 +33,30 @@ export default function DoctorAppointments() {
     visible: { opacity: 1, y: 0 },
   };
 
-  // Get appointments for the logged-in doctor
-  const appointments = useSelector(
-  user?.id ? selectAppointmentsByDoctor(user.id) : () => []
+const doctorId = user?.id;
+
+const date = new Date();
+const today = date.toISOString().split("T")[0];
+const month = date.getMonth();   
+const year = date.getFullYear();
+
+
+const todayAppointments = useAppSelector(state =>
+  doctorId
+    ? selectTodayAppointmentsByDoctor(state, doctorId, today)
+    : []
+);
+
+const monthlyAppointments = useAppSelector(state =>
+  doctorId
+    ? selectMonthlyAppointmentsByDoctor(state, doctorId, month, year)
+    : []
 );
 
 
-  const todayAppointments = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    return appointments.filter(apt => apt.date === today);
-  }, [appointments]);
+const pendingCount = todayAppointments.filter(a => a.status === "Pending").length;
+const confirmedCount = todayAppointments.filter(a => a.status === "Confirmed").length;
 
-  const pendingCount = appointments.filter(a => a.status === 'Pending').length;
-  const confirmedCount = appointments.filter(a => a.status === 'Confirmed').length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,7 +71,6 @@ export default function DoctorAppointments() {
             initial="hidden"
             animate="visible"
           >
-            {/* Page Header */}
             <motion.div variants={itemVariants} className="mb-8">
               <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                 My Appointments
@@ -69,7 +80,6 @@ export default function DoctorAppointments() {
               </p>
             </motion.div>
 
-            {/* Stats Summary */}
             <motion.div 
               variants={itemVariants}
               className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8"
@@ -85,25 +95,8 @@ export default function DoctorAppointments() {
                       <Calendar className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{appointments.length}</p>
-                      <p className="text-sm text-muted-foreground">Total Appointments</p>
-                    </div>
-                  </motion.div>
-                </CardContent>
-              </Card>
-              <Card className="overflow-hidden">
-                <CardContent className="p-5">
-                  <motion.div 
-                    className="flex items-center gap-3"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                  >
-                    <div className="p-3 rounded-xl bg-blue-500/10">
-                      <Clock className="w-6 h-6 text-blue-500" />
-                    </div>
-                    <div>
                       <p className="text-2xl font-bold text-foreground">{todayAppointments.length}</p>
-                      <p className="text-sm text-muted-foreground">Today</p>
+                      <p className="text-sm text-muted-foreground">Total Appointments</p>
                     </div>
                   </motion.div>
                 </CardContent>
@@ -142,11 +135,27 @@ export default function DoctorAppointments() {
                   </motion.div>
                 </CardContent>
               </Card>
+                            <Card className="overflow-hidden">
+                <CardContent className="p-5">
+                  <motion.div 
+                    className="flex items-center gap-3"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <div className="p-3 rounded-xl bg-blue-500/10">
+                      <Clock className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{monthlyAppointments.length}</p>
+                      <p className="text-sm text-muted-foreground">Monthly Appointment</p>
+                    </div>
+                  </motion.div>
+                </CardContent>
+              </Card>
             </motion.div>
 
-            {/* Calendar */}
             <motion.div variants={itemVariants}>
-              <AppointmentCalendar appointments={appointments} />
+              <AppointmentCalendar/>
             </motion.div>
           </motion.div>
         </main>

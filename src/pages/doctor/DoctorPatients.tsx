@@ -36,7 +36,6 @@ export default function DoctorPatients() {
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [showFilters, setShowFilters] = useState(false);
 
-  // Get patients for the logged-in doctor
   const patients = useMemo(() => {
     if (user?.id) {
       return getPatientsByDoctorId(user.id);
@@ -46,14 +45,11 @@ export default function DoctorPatients() {
 
   const filteredPatients = useMemo(() => {
     return patients.filter(patient => {
-      // Search filter
       const matchesSearch = patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         patient.condition.toLowerCase().includes(searchQuery.toLowerCase());
       
-      // Tag filter
       const matchesTag = selectedTag === 'all' || patient.tag === selectedTag;
       
-      // Date range filter
       let matchesDateRange = true;
       if (startDate && endDate) {
         const lastVisit = parseISO(patient.lastVisit);
@@ -128,7 +124,6 @@ export default function DoctorPatients() {
             initial="hidden"
             animate="visible"
           >
-            {/* Page Header */}
             <motion.div variants={itemVariants} className="mb-8">
               <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                 My Patients
@@ -138,7 +133,6 @@ export default function DoctorPatients() {
               </p>
             </motion.div>
 
-            {/* Stats */}
             <motion.div 
               variants={itemVariants}
               className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8"
@@ -219,7 +213,6 @@ export default function DoctorPatients() {
               </Card>
             </motion.div>
 
-            {/* Search and Filters */}
             <motion.div variants={itemVariants} className="mb-6 space-y-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1 max-w-md">
@@ -252,7 +245,6 @@ export default function DoctorPatients() {
                 )}
               </div>
 
-              {/* Filter Panel */}
               <AnimatePresence>
                 {showFilters && (
                   <motion.div
@@ -264,7 +256,6 @@ export default function DoctorPatients() {
                   >
                     <Card>
                       <CardContent className="p-4 space-y-4">
-                        {/* Tag Filters */}
                         <div>
                           <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                             <Tag className="w-4 h-4" />
@@ -292,7 +283,6 @@ export default function DoctorPatients() {
                           </div>
                         </div>
 
-                        {/* Date Range Filters */}
                         <div className="flex flex-col sm:flex-row gap-4">
                           <div className="flex-1">
                             <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
@@ -344,7 +334,6 @@ export default function DoctorPatients() {
               </AnimatePresence>
             </motion.div>
 
-            {/* Patients Grid */}
             <motion.div 
               variants={itemVariants}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -378,12 +367,11 @@ export default function DoctorPatients() {
                               </p>
                             </div>
                           </div>
-                          <Badge variant={getStatusColor(patient.status) as any}>
+                          <Badge variant={getStatusColor(patient.status) }>
                             {patient.status}
                           </Badge>
                         </div>
 
-                        {/* Tag Badge */}
                         <div className="mb-3">
                           <span className={cn(
                             "inline-flex px-2 py-0.5 rounded-full text-xs font-medium border",

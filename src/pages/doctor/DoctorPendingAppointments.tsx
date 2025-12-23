@@ -21,6 +21,7 @@ import {
 } from "@/redux/slices/appointmentsSlice";
 import { CancelReasonModal } from "@/components/modals/CancelReasonModal";
 import RescheduleModal from "@/components/modals/RescheduleModal";
+import { Appointment } from "@/data/appointmentsData";
 // import { RescheduleModal } from "@/components/modals/RescheduleModal";
 
 export default function DoctorPendingAppointments() {
@@ -35,12 +36,11 @@ export default function DoctorPendingAppointments() {
     )
   );
 
-  const [selectedAppt, setSelectedAppt] = useState<any>(null);
+  const [selectedAppt, setSelectedAppt] = useState<Appointment>(null);
   const [showCancel, setShowCancel] = useState(false);
   const [showReschedule, setShowReschedule] = useState(false);
 
-  /* ---------- ACTIONS ---------- */
-  const approve = (appt: any) => {
+  const approve = (appt: Appointment) => {
     dispatch(updateAppointmentStatus({ id: appt.id, status: "Confirmed" }));
     toast({
       title: "Appointment Approved",
@@ -148,7 +148,6 @@ export default function DoctorPendingAppointments() {
         </main>
       </div>
 
-      {/* MODALS */}
       <CancelReasonModal
         open={showCancel}
         onClose={() => setShowCancel(false)}
