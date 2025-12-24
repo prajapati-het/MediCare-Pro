@@ -42,7 +42,7 @@ const DoctorPendingAppointments = lazy(() => import("./pages/doctor/DoctorPendin
 const DoctorPatients = lazy(() => import("./pages/doctor/DoctorPatients"));
 const DoctorProfile = lazy(() => import("./pages/doctor/DoctorProfile"));
 const AppointmentDetail = lazy(() => import("./pages/doctor/AppointmentDetail"));
-const PatientDetail = lazy(() => import("./pages/doctor/PatientDetail"));
+const PatientDetail = lazy(() => import("./pages/doctor/PatientDetails/PatientDetail"));
 
 const EditDoctor = lazy(() => import("./pages/EditDoctor"));
 const EditStaff = lazy(() => import("./pages/EditStaff"));

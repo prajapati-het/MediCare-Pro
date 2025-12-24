@@ -72,10 +72,7 @@ export interface Patient {
   notes: string;
 }
 
-// Helper function to get patient by ID
-export const getPatientById = (patientId: number): Patient | undefined => {
-  return patientsData.find(patient => patient.id === patientId);
-};
+
 
 export const patientsData: Patient[] = [
   // Dr. Sarah Mitchell (id: 1) - Cardiologist at City General Hospital

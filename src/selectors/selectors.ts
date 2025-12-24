@@ -83,3 +83,7 @@ export const selectAppointmentsWithPatientInfo = createSelector(
     });
   }
 );
+
+
+export const selectPatientById = (patientId: number) => (state: RootState) =>
+  state.patients.list.find(p => p.id === patientId);
