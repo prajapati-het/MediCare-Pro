@@ -1,3 +1,5 @@
+import { Appointment } from "@/data/appointmentsData";
+import { patientsData } from "@/data/patientsData";
 import { RootState } from "@/redux/store";
 import { createSelector } from "@reduxjs/toolkit";
 
@@ -55,3 +57,29 @@ export const selectPendingAppointmentsByDoctor =
 export const selectAppointmentById =
   (id: number) => (state: RootState) =>
     state.appointments.list.find(a => a.id === id);
+
+
+
+  // Selector to get all appointments from redux
+const selectAppointments = (state: RootState) => state.appointments.list;
+
+// Selector to enrich appointments with patient info
+export const selectAppointmentsWithPatientInfo = createSelector(
+  [selectAppointments],
+  (appointments: Appointment[]) => {
+    return appointments.map((apt) => {
+      const patient = patientsData.find((p) => p.id === apt.patientId);
+      return {
+        ...apt,
+        patientName: patient?.name || "—",
+        condition: patient?.condition || "—",
+        age: patient?.age ?? "—",
+        height: patient?.vitals.height ?? "—",
+        weight: patient?.vitals.weight ?? "—",
+        contact: patient?.phone || "—",
+        email: patient?.email || "—",
+        tag: patient?.tag || "_"
+      };
+    });
+  }
+);

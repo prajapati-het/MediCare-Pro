@@ -7,31 +7,29 @@ export interface Appointment {
   time: string;
   date: string;
   type: 'Consultation' | 'Check-up' | 'Follow-up' | 'Video Call' | 'Surgery' | 'Lab Review';
-  status: 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled' | 'No Show';
+  status: 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled' | 'No Show' | 'Delayed';
   notes: string;
   duration: number; // in minutes
   room: string;
+  cancelReason?: string
 }
 
 export const appointmentsData: Appointment[] = [
-  // Dr. Sarah Mitchell (id: 1) - Cardiologist - December 2025
-  { id: 1, doctorId: 1, patientId: 1, patientName: "John Smith", time: "09:00 AM", date: "2025-12-16", type: "Follow-up", status: "Confirmed", notes: "Blood pressure follow-up", duration: 30, room: "Room 401" },
-  { id: 2, doctorId: 1, patientId: 2, patientName: "Robert Wilson", time: "10:00 AM", date: "2025-12-16", type: "Check-up", status: "Confirmed", notes: "Cardiac rhythm check", duration: 45, room: "Room 401" },
-  { id: 3, doctorId: 1, patientId: 3, patientName: "Patricia Anderson", time: "11:30 AM", date: "2025-12-16", type: "Consultation", status: "Pending", notes: "New symptom discussion", duration: 30, room: "Room 402" },
-  { id: 4, doctorId: 1, patientId: 1, patientName: "John Smith", time: "02:00 PM", date: "2025-12-17", type: "Lab Review", status: "Pending", notes: "Review blood work results", duration: 20, room: "Room 401" },
-  { id: 5, doctorId: 1, patientId: 2, patientName: "Robert Wilson", time: "03:30 PM", date: "2025-12-18", type: "Video Call", status: "Confirmed", notes: "Telemedicine follow-up", duration: 20, room: "Virtual" },
-  { id: 24, doctorId: 1, patientId: 3, patientName: "Patricia Anderson", time: "09:30 AM", date: "2025-12-19", type: "Follow-up", status: "Pending", notes: "Heart failure monitoring", duration: 30, room: "Room 401" },
-  { id: 25, doctorId: 1, patientId: 1, patientName: "John Smith", time: "11:00 AM", date: "2025-12-20", type: "Check-up", status: "Confirmed", notes: "Medication review", duration: 30, room: "Room 402" },
-  { id: 26, doctorId: 1, patientId: 2, patientName: "Robert Wilson", time: "02:30 PM", date: "2025-12-22", type: "Surgery", status: "Pending", notes: "Pacemaker adjustment", duration: 60, room: "OR 2" },
-  { id: 27, doctorId: 1, patientId: 3, patientName: "Patricia Anderson", time: "10:00 AM", date: "2025-12-23", type: "Consultation", status: "Confirmed", notes: "Treatment plan review", duration: 45, room: "Room 401" },
 
-  // Dr. Michael Chen (id: 2) - Neurologist
-  { id: 6, doctorId: 2, patientId: 4, patientName: "Emily Martinez", time: "09:30 AM", date: "2025-12-16", type: "Follow-up", status: "Confirmed", notes: "Migraine treatment review", duration: 30, room: "Room 403" },
-  { id: 7, doctorId: 2, patientId: 5, patientName: "David Thompson", time: "11:00 AM", date: "2025-12-16", type: "Check-up", status: "Confirmed", notes: "Parkinson's assessment", duration: 45, room: "Room 403" },
-  { id: 8, doctorId: 2, patientId: 6, patientName: "Jennifer Lee", time: "02:30 PM", date: "2025-12-17", type: "Consultation", status: "Pending", notes: "MS treatment options", duration: 60, room: "Room 404" },
-  { id: 9, doctorId: 2, patientId: 4, patientName: "Emily Martinez", time: "10:00 AM", date: "2025-12-18", type: "Video Call", status: "Pending", notes: "Medication adjustment discussion", duration: 20, room: "Virtual" },
-  { id: 28, doctorId: 2, patientId: 5, patientName: "David Thompson", time: "09:00 AM", date: "2025-12-19", type: "Follow-up", status: "Confirmed", notes: "Tremor evaluation", duration: 30, room: "Room 403" },
-  { id: 29, doctorId: 2, patientId: 6, patientName: "Jennifer Lee", time: "03:00 PM", date: "2025-12-20", type: "Lab Review", status: "Pending", notes: "MRI results review", duration: 30, room: "Room 404" },
+  { id: 25, doctorId: 1, patientId: 1, patientName: "John Smith", time: "11:00 AM", date: "2025-12-20", type: "Check-up", status: "Pending", notes: "Medication review", duration: 30, room: "Room 402" },
+  { id: 26, doctorId: 1, patientId: 2, patientName: "Robert Wilson", time: "02:30 PM", date: "2025-12-22", type: "Surgery", status: "Pending", notes: "Pacemaker adjustment", duration: 60, room: "OR 2" },
+  { id: 27, doctorId: 1, patientId: 3, patientName: "Patricia Anderson", time: "10:00 AM", date: "2025-12-23", type: "Consultation", status: "Pending", notes: "Treatment plan review", duration: 45, room: "Room 401" },
+
+  // New patients
+  { id: 28, doctorId: 2, patientId: 4, patientName: "Emily Davis", time: "09:00 AM", date: "2025-12-16", type: "Check-up", status: "Confirmed", notes: "Routine health check", duration: 30, room: "Room 403" },
+  { id: 29, doctorId: 2, patientId: 5, patientName: "Michael Johnson", time: "10:30 AM", date: "2025-12-16", type: "Consultation", status: "Confirmed", notes: "Discuss treatment options", duration: 45, room: "Room 404" },
+  { id: 30, doctorId: 2, patientId: 6, patientName: "Sophia Martinez", time: "01:00 PM", date: "2025-12-17", type: "Lab Review", status: "Confirmed", notes: "Blood test review", duration: 20, room: "Room 403" },
+  { id: 31, doctorId: 2, patientId: 7, patientName: "James Brown", time: "02:30 PM", date: "2025-12-18", type: "Video Call", status: "Confirmed", notes: "Teleconsultation", duration: 30, room: "Virtual" },
+  { id: 32, doctorId: 3, patientId: 8, patientName: "Olivia Wilson", time: "09:30 AM", date: "2025-12-19", type: "Follow-up", status: "Confirmed", notes: "Post-surgery check", duration: 30, room: "Room 405" },
+  { id: 33, doctorId: 3, patientId: 9, patientName: "Liam Taylor", time: "11:00 AM", date: "2025-12-20", type: "Consultation", status: "Confirmed", notes: "New patient intake", duration: 45, room: "Room 406" },
+  { id: 34, doctorId: 3, patientId: 10, patientName: "Ava Thomas", time: "02:00 PM", date: "2025-12-21", type: "Check-up", status: "Confirmed", notes: "Routine monitoring", duration: 30, room: "Room 405" },
+  { id: 35, doctorId: 3, patientId: 11, patientName: "William Harris", time: "03:30 PM", date: "2025-12-22", type: "Consultation", status: "Confirmed", notes: "Medication adjustment", duration: 30, room: "Room 406" },
+  { id: 36, doctorId: 3, patientId: 12, patientName: "Isabella Clark", time: "10:00 AM", date: "2025-12-23", type: "Follow-up", status: "Confirmed", notes: "Lab result discussion", duration: 30, room: "Room 405" },
 
   // Dr. Emily Davis (id: 3) - Orthopedics
   { id: 10, doctorId: 3, patientId: 7, patientName: "Michael Brown", time: "08:30 AM", date: "2025-12-16", type: "Follow-up", status: "Confirmed", notes: "Post-surgery check", duration: 30, room: "Room 201" },

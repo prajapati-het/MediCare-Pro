@@ -63,183 +63,80 @@ function PageLoader() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-  <Provider store={store} >
-    <PersistGate loading={<PageLoader />} persistor={persistor}>
-      <HospitalsProvider>
-        <DoctorsProvider>
-          <StaffProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<PublicRoute><Index /></PublicRoute>} />
-                  <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/unauthorized" element={<PublicRoute><Unauthorized /></PublicRoute>} />
-                  
-                  {/* Protected Routes - Both Admin and Doctor */}
-                  <Route path="/dashboard" element={
-                    <ProtectedRoute allowedRoles={['admin', 'doctor']}>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } />
-                  
-                  {/* Admin Routes */}
-                  <Route path="/admin/doctors" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <AdminDoctors />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/doctors/add" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <AddDoctor />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/doctors/:id" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <DoctorDetail />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/doctors/:id/edit" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <EditDoctor />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/staff" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <AdminStaff />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/staff/add" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <AddStaff />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/staff/:id" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <StaffDetail />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/staff/:id/edit" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <EditStaff />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/facilities" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <AdminFacilities />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/problems" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <AdminProblems />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/settings" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <AdminSettings />
-                    </ProtectedRoute>
-                  } />
-                  
-                  {/* Doctor Routes */}
-                  <Route path="/doctor/appointments" element={
-                    <ProtectedRoute allowedRoles={['doctor']}>
-                      <DoctorAppointments />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/doctor/appointments/:id" element={
-                    <ProtectedRoute allowedRoles={['doctor']}>
-                      <AppointmentDetail />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/doctor/pending-appointments" element={
-                    <ProtectedRoute allowedRoles={['doctor']}>
-                      <DoctorPendingAppointments />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/doctor/patients" element={
-                    <ProtectedRoute allowedRoles={['doctor']}>
-                      <DoctorPatients />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/doctor/patients/:id" element={
-                    <ProtectedRoute allowedRoles={['doctor']}>
-                      <PatientDetail />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/doctor/profile" element={
-                    <ProtectedRoute allowedRoles={['doctor']}>
-                      <DoctorProfile />
-                    </ProtectedRoute>
-                  } />
-                  
-                  {/* Legacy routes - redirect to new structure */}
-                  <Route path="/hospitals" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <Hospitals />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/hospitals/add" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <AddHospital />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/hospitals/:id" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <HospitalDetail />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/hospitals/:id/edit" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <EditHospital />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/doctors" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <Doctors />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/doctors/add" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <AddDoctor />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/doctors/:id" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <DoctorDetail />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/staff" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <Staff />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/staff/add" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <AddStaff />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/staff/:id" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <StaffDetail />
-                    </ProtectedRoute>
-                  } />
-                  
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
-          </TooltipProvider>
-        </StaffProvider>
-      </DoctorsProvider>
-    </HospitalsProvider>
-  </PersistGate>
-  </Provider>
+    <Provider store={store}>
+      <PersistGate loading={<PageLoader />} persistor={persistor}>
+        <HospitalsProvider>
+          <DoctorsProvider>
+            <StaffProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+
+                      {/* Public Routes */}
+                      <Route path="/" element={<PublicRoute><Index /></PublicRoute>} />
+                      <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/unauthorized" element={<PublicRoute><Unauthorized /></PublicRoute>} />
+
+                      {/* Shared Protected */}
+                      <Route path="/dashboard" element={
+                        <ProtectedRoute allowedRoles={['admin', 'doctor']}>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      } />
+
+                      {/* Admin Routes */}
+                      <Route path="/admin/doctors" element={<ProtectedRoute allowedRoles={['admin']}><AdminDoctors /></ProtectedRoute>} />
+                      <Route path="/admin/doctors/add" element={<ProtectedRoute allowedRoles={['admin']}><AddDoctor /></ProtectedRoute>} />
+                      <Route path="/admin/doctors/:id" element={<ProtectedRoute allowedRoles={['admin']}><DoctorDetail /></ProtectedRoute>} />
+                      <Route path="/admin/doctors/:id/edit" element={<ProtectedRoute allowedRoles={['admin']}><EditDoctor /></ProtectedRoute>} />
+
+                      <Route path="/admin/staff" element={<ProtectedRoute allowedRoles={['admin']}><AdminStaff /></ProtectedRoute>} />
+                      <Route path="/admin/staff/add" element={<ProtectedRoute allowedRoles={['admin']}><AddStaff /></ProtectedRoute>} />
+                      <Route path="/admin/staff/:id" element={<ProtectedRoute allowedRoles={['admin']}><StaffDetail /></ProtectedRoute>} />
+                      <Route path="/admin/staff/:id/edit" element={<ProtectedRoute allowedRoles={['admin']}><EditStaff /></ProtectedRoute>} />
+
+                      <Route path="/admin/facilities" element={<ProtectedRoute allowedRoles={['admin']}><AdminFacilities /></ProtectedRoute>} />
+                      <Route path="/admin/problems" element={<ProtectedRoute allowedRoles={['admin']}><AdminProblems /></ProtectedRoute>} />
+                      <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminSettings /></ProtectedRoute>} />
+
+                      {/* Doctor Routes */}
+                      <Route path="/doctor/appointments" element={<ProtectedRoute allowedRoles={['doctor']}><DoctorAppointments /></ProtectedRoute>} />
+                      <Route path="/doctor/appointments/:id" element={<ProtectedRoute allowedRoles={['doctor']}><AppointmentDetail /></ProtectedRoute>} />
+                      <Route path="/doctor/pending-appointments" element={<ProtectedRoute allowedRoles={['doctor']}><DoctorPendingAppointments /></ProtectedRoute>} />
+                      <Route path="/doctor/patients" element={<ProtectedRoute allowedRoles={['doctor']}><DoctorPatients /></ProtectedRoute>} />
+                      <Route path="/doctor/patients/:id" element={<ProtectedRoute allowedRoles={['doctor']}><PatientDetail /></ProtectedRoute>} />
+                      <Route path="/doctor/profile" element={<ProtectedRoute allowedRoles={['doctor']}><DoctorProfile /></ProtectedRoute>} />
+
+                      {/* Legacy */}
+                      <Route path="/hospitals" element={<ProtectedRoute allowedRoles={['admin']}><Hospitals /></ProtectedRoute>} />
+                      <Route path="/hospitals/add" element={<ProtectedRoute allowedRoles={['admin']}><AddHospital /></ProtectedRoute>} />
+                      <Route path="/hospitals/:id" element={<ProtectedRoute allowedRoles={['admin']}><HospitalDetail /></ProtectedRoute>} />
+                      <Route path="/hospitals/:id/edit" element={<ProtectedRoute allowedRoles={['admin']}><EditHospital /></ProtectedRoute>} />
+
+                      <Route path="/doctors" element={<ProtectedRoute allowedRoles={['admin']}><Doctors /></ProtectedRoute>} />
+                      <Route path="/doctors/add" element={<ProtectedRoute allowedRoles={['admin']}><AddDoctor /></ProtectedRoute>} />
+                      <Route path="/doctors/:id" element={<ProtectedRoute allowedRoles={['admin']}><DoctorDetail /></ProtectedRoute>} />
+
+                      <Route path="/staff" element={<ProtectedRoute allowedRoles={['admin']}><Staff /></ProtectedRoute>} />
+                      <Route path="/staff/add" element={<ProtectedRoute allowedRoles={['admin']}><AddStaff /></ProtectedRoute>} />
+                      <Route path="/staff/:id" element={<ProtectedRoute allowedRoles={['admin']}><StaffDetail /></ProtectedRoute>} />
+
+                      <Route path="*" element={<NotFound />} />
+
+                    </Routes>
+                  </Suspense>
+                </BrowserRouter>
+              </TooltipProvider>
+            </StaffProvider>
+          </DoctorsProvider>
+        </HospitalsProvider>
+      </PersistGate>
+    </Provider>
   </QueryClientProvider>
 );
 

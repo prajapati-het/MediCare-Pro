@@ -1,21 +1,7 @@
 // src/redux/slices/appointmentsSlice.ts
-import { appointmentsData } from "@/data/appointmentsData";
+import { Appointment, appointmentsData } from "@/data/appointmentsData";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export interface Appointment {
-    id: number;
-    doctorId: number;
-    patientId: number;
-    patientName: string;
-    time: string;
-    date: string;
-    type: 'Consultation' | 'Check-up' | 'Follow-up' | 'Video Call' | 'Surgery' | 'Lab Review';
-    status: 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled' | 'No Show' | 'Delayed';
-    notes: string;
-    duration: number;
-    room: string;
-    cancelReason?: string;
-}
 
 interface AppointmentsState {
     list: Appointment[];
