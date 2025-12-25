@@ -249,63 +249,6 @@ export default function Index() {
           </div>
         </section>
 
-        {/* <section className="py-16 lg:py-24">
-          <div className="container mx-auto px-4 lg:px-8">
-            <motion.div
-              className="relative overflow-hidden rounded-3xl p-8 md:p-12 lg:p-16"
-              style={{ background: 'var(--gradient-hero)' }}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-            >
-              <div className="relative z-10 max-w-2xl">
-                <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-                  Ready to Transform Your Hospital Management?
-                </h2>
-                <p className="text-primary-foreground/80 mb-8">
-                  Join hundreds of healthcare facilities already using MediCare Pro to streamline their operations.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button 
-                      variant="glass" 
-                      size="lg" 
-                      className="gap-2"
-                      onClick={handleNavigateWithAuth}
-                    >
-                      Get Started
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </motion.div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button variant="hero-outline" size="lg">
-                      Schedule Demo
-                    </Button>
-                  </motion.div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-6 mt-8">
-                  {['No credit card required', 'Free 14-day trial', '24/7 Support'].map((item) => (
-                    <motion.div 
-                      key={item} 
-                      className="flex items-center gap-2 text-primary-foreground/80 text-sm"
-                      whileHover={{ scale: 1.05 }}
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>{item}</span>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="absolute top-0 right-0 w-1/2 h-full opacity-10">
-                <div className="absolute top-10 right-10 w-40 h-40 bg-primary-foreground rounded-full blur-3xl" />
-                <div className="absolute bottom-10 right-40 w-60 h-60 bg-primary-foreground rounded-full blur-3xl" />
-              </div>
-            </motion.div>
-          </div>
-        </section> */}
-
         <footer className="py-12 border-t border-border">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">

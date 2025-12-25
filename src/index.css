@@ -258,3 +258,98 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
 }
+.print-watermark {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 14mm 20mm 14mm;
+    
+    /* Place footer in page margin using @page rule */
+    @bottom-center {
+      content: "Page " counter(page);
+    }
+  }
+  
+  html, body {
+    width: 210mm;
+    margin: 0;
+    padding: 0;
+    background: white;
+    font-size: 12px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* WATERMARK */
+  .print-watermark {
+    display: block !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) rotate(-45deg) !important;
+    font-size: 5rem !important;
+    font-weight: 700 !important;
+    color: rgba(0, 0, 0, 0.08) !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+    font-family: Arial, sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Footer in running header/footer */
+  .print-footer {
+    position: running(footer);
+  }
+  
+  .print-footer-content {
+    position: fixed;
+    bottom: 6mm;
+    left: 14mm;
+    right: 14mm;
+    font-size: 10px;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+    z-index: 10000;
+  }
+  
+  /* Page number using named string */
+  .page-number::after {
+    content: counter(page);
+  }
+  
+  /* Ensure content stays below watermark in z-index but visible */
+  .print-container {
+    position: relative;
+    z-index: 1;
+    background: white;
+  }
+  
+  /* Avoid ugly splits */
+  .page-break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  /* Force page break */
+  .page-break {
+    page-break-before: always;
+    break-before: page;
+  }
+}
+
+/* Hide watermark on screen */
+.print-watermark {
+  display: none;
+}

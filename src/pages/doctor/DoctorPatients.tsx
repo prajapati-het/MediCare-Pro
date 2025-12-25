@@ -7,7 +7,8 @@ import {
   Eye,
   Filter,
   X,
-  Tag
+  Tag,
+  Receipt
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
@@ -390,20 +391,34 @@ export default function DoctorPatients() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 gap-1" 
-                            onClick={() => navigate(`/doctor/patients/${patient.id}`)}
-                          >
-                            <Eye className="w-4 h-4" />
-                            View
-                          </Button>
-                          <Button variant="outline" size="sm" className="gap-1">
-                            <FileText className="w-4 h-4" />
-                            Records
-                          </Button>
-                        </div>
+  <Button 
+    variant="outline" 
+    size="sm" 
+    className="flex-1 gap-1" 
+    onClick={() => navigate(`/doctor/patients/${patient.id}`)}
+  >
+    <Eye className="w-4 h-4" />
+    View
+  </Button>
+  <Button 
+    variant="outline" 
+    size="sm" 
+    className="gap-1"
+    onClick={() => navigate(`/doctor/patients/${patient.id}/records`)}
+  >
+    <FileText className="w-4 h-4" />
+    Records
+  </Button>
+  <Button 
+    variant="outline" 
+    size="sm" 
+    className="gap-1"
+    onClick={() => navigate(`/doctor/${user.id}/patients/${patient.id}/bill`)}
+  >
+    <Receipt className="w-4 h-4" />
+    Bill
+  </Button>
+</div>
                       </CardContent>
                     </Card>
                   </motion.div>

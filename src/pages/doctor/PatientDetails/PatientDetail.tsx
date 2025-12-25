@@ -65,7 +65,7 @@ export default function PatientDetail() {
         open={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
         patient={patient}
-        selectedSections={selectedSections}
+        // selectedSections={selectedSections}
       />
     </div>
   );
