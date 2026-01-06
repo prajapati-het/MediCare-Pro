@@ -86,7 +86,8 @@ export default function AdminDoctors() {
                   Doctors Management
                 </h1>
                 <p className="text-muted-foreground">
-                  Manage doctors for {user?.hospitalName}
+                  Manage doctors for {user?.hospital}
+
                 </p>
               </div>
               <Button onClick={() => navigate('/admin/doctors/add')} className="gap-2">

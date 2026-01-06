@@ -40,41 +40,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { getPatientsByDoctorId } from '@/data/patientsData';
 import { useMemo } from 'react';
-
-const statsCards = [
-  { 
-    icon: Users, 
-    label: 'Total Patients', 
-    value: '12,847', 
-    change: '+12.5%', 
-    trend: 'up',
-    color: 'primary' 
-  },
-  { 
-    icon: Stethoscope, 
-    label: 'Active Doctors', 
-    value: '248', 
-    change: '+5.2%', 
-    trend: 'up',
-    color: 'secondary' 
-  },
-  { 
-    icon: Calendar, 
-    label: "Today's Appointments", 
-    value: '156', 
-    change: '-3.1%', 
-    trend: 'down',
-    color: 'accent' 
-  },
-  { 
-    icon: Bed, 
-    label: 'Available Beds', 
-    value: '89', 
-    change: '+8.4%', 
-    trend: 'up',
-    color: 'success' 
-  },
-];
+import { selectAppointmentsWithPatientInfoByDoctor, selectPatientsByDoctor, selectTodayAppointmentsByDoctor } from '@/selectors/selectors';
+import { Patient } from '@/types/type';
+import { useAppSelector } from '@/redux/hooks';
 
 const weeklyData = [
   { name: 'Mon', patients: 120, appointments: 85, admissions: 24 },
@@ -110,29 +78,62 @@ const upcomingAppointments = [
 ];
 
 export default function Dashboard() {
-  const { user, isLoggedIn } = useSelector((state: RootState) => state.app);
-  const dispatch = useDispatch();
+    const { doctorUser, isLoggedIn, adminUser } = useSelector((state: RootState) => state.app);
+  const doctorId = doctorUser?.id;
+  const todayStr = new Date().toISOString().split('T')[0];
 
-  const patients = useMemo(() => {
-      if (user?.id) {
-        return getPatientsByDoctorId(user.id);
-      }
-      return [];
-    }, [user?.id]);
+  // ✅ Redux selectors
+  const patients = useAppSelector(state =>
+    doctorId ? selectPatientsByDoctor(state, doctorId) : []
+  );
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
+  const todayAppointments = useAppSelector(state =>
+    doctorId ? selectTodayAppointmentsByDoctor(state, doctorId, todayStr) : []
+  );
+
+  // ✅ Stats cards
+  const statsCards = useMemo(() => [
+    { 
+      icon: Users, 
+      label: 'Total Patients', 
+      value: patients.length.toLocaleString(), 
+      change: '+12.5%',   // static for now
+      trend: 'up',
+      color: 'bg-primary/10',
+      iconColor: 'text-primary'
     },
-  };
+    { 
+      icon: Stethoscope, 
+      label: 'Active Doctors', 
+      value: '248',       // static
+      change: '+5.2%', 
+      trend: 'up',
+      color: 'bg-secondary/10',
+      iconColor: 'text-secondary'
+    },
+    { 
+      icon: Calendar, 
+      label: "Today's Appointments", 
+      value: todayAppointments.length.toString(),
+      change: '-3.1%',    // static
+      trend: 'down',
+      color: 'bg-accent/10',
+      iconColor: 'text-accent'
+    },
+    { 
+      icon: Bed, 
+      label: 'Available Beds', 
+      value: '89',        // static
+      change: '+8.4%', 
+      trend: 'up',
+      color: 'bg-success/10',
+      iconColor: 'text-success'
+    },
+  ], [patients.length, todayAppointments.length]);
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
+  // ✅ Motion variants
+  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+  const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -148,13 +149,13 @@ export default function Dashboard() {
           >
             <motion.div variants={itemVariants} className="mb-8">
               <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                {user ? `Welcome back, ${user.username.split(' ')[0]}!` : 'Dashboard Overview'}
+                {doctorUser ? `Welcome back, ${doctorUser.username.split(' ')[0]}!` : 'Dashboard Overview'}
               </h1>
               <p className="text-muted-foreground">
-                {user?.role === 'admin'
-                  ? `Managing ${user.hospital || 'your hospital'}`
-                  : user?.role === 'doctor'
-                  ? `Welcome to ${user.hospital || 'your hospital'}`
+                {adminUser
+                  ? `Managing ${adminUser.hospital || 'your hospital'}`
+                  : doctorUser
+                  ? `Welcome to ${doctorUser.hospital || 'your hospital'}`
                   : 'View hospital statistics and performance metrics'
                 }
               </p>

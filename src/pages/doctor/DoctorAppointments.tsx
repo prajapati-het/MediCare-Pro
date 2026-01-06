@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Calendar, 
@@ -9,16 +8,16 @@ import {
 import { Header } from '@/components/Header';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { Card, CardContent } from '@/components/ui/card';
-//import { getAppointmentsByDoctorId } from '@/data/appointmentsData';
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { AppointmentCalendar } from '@/components/AppointmentCalendar';
 import { selectMonthlyAppointmentsByDoctor, selectTodayAppointmentsByDoctor } from '@/selectors/selectors';
 import { useAppSelector } from '@/redux/hooks';
-
+import { useNavigate } from 'react-router-dom';
 
 export default function DoctorAppointments() {
   const { user } = useSelector((state: RootState) => state.app);
+  const navigate = useNavigate();
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -33,30 +32,27 @@ export default function DoctorAppointments() {
     visible: { opacity: 1, y: 0 },
   };
 
-const doctorId = user?.id;
+  const doctorId = user?.id;
 
-const date = new Date();
-const today = date.toISOString().split("T")[0];
-const month = date.getMonth();   
-const year = date.getFullYear();
+  const date = new Date();
+  const today = date.toISOString().split("T")[0];
+  const month = date.getMonth();   
+  const year = date.getFullYear();
 
+  const todayAppointments = useAppSelector(state =>
+    doctorId
+      ? selectTodayAppointmentsByDoctor(state, doctorId, today)
+      : []
+  );
 
-const todayAppointments = useAppSelector(state =>
-  doctorId
-    ? selectTodayAppointmentsByDoctor(state, doctorId, today)
-    : []
-);
+  const monthlyAppointments = useAppSelector(state =>
+    doctorId
+      ? selectMonthlyAppointmentsByDoctor(state, doctorId, month, year)
+      : []
+  );
 
-const monthlyAppointments = useAppSelector(state =>
-  doctorId
-    ? selectMonthlyAppointmentsByDoctor(state, doctorId, month, year)
-    : []
-);
-
-
-const pendingCount = todayAppointments.filter(a => a.status === "Pending").length;
-const confirmedCount = todayAppointments.filter(a => a.status === "Confirmed").length;
-
+  const pendingCount = monthlyAppointments.filter(a => a.status === "Pending").length;
+  const confirmedCount = monthlyAppointments.filter(a => a.status === "Confirmed").length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,7 +80,10 @@ const confirmedCount = todayAppointments.filter(a => a.status === "Confirmed").l
               variants={itemVariants}
               className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8"
             >
-              <Card className="overflow-hidden">
+              <Card 
+                className="overflow-hidden cursor-pointer hover:shadow-md transition"
+                onClick={() => navigate("/doctor/appointments/today")}
+              >
                 <CardContent className="p-5">
                   <motion.div 
                     className="flex items-center gap-3"
@@ -96,12 +95,16 @@ const confirmedCount = todayAppointments.filter(a => a.status === "Confirmed").l
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-foreground">{todayAppointments.length}</p>
-                      <p className="text-sm text-muted-foreground">Total Appointments</p>
+                      <p className="text-sm text-muted-foreground">Today's Appointments</p>
                     </div>
                   </motion.div>
                 </CardContent>
               </Card>
-              <Card className="overflow-hidden">
+
+              <Card 
+                className="overflow-hidden cursor-pointer hover:shadow-md transition"
+                onClick={() => navigate("/doctor/appointments/confirmed")}
+              >
                 <CardContent className="p-5">
                   <motion.div 
                     className="flex items-center gap-3"
@@ -118,9 +121,13 @@ const confirmedCount = todayAppointments.filter(a => a.status === "Confirmed").l
                   </motion.div>
                 </CardContent>
               </Card>
-              <Card className="overflow-hidden">
+
+              <Card
+                className="overflow-hidden cursor-pointer hover:shadow-md transition"
+                onClick={() => navigate("/doctor/appointments/pending")}
+              >
                 <CardContent className="p-5">
-                  <motion.div 
+                  <motion.div
                     className="flex items-center gap-3"
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300 }}
@@ -129,13 +136,21 @@ const confirmedCount = todayAppointments.filter(a => a.status === "Confirmed").l
                       <AlertCircle className="w-6 h-6 text-amber-500" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{pendingCount}</p>
-                      <p className="text-sm text-muted-foreground">Pending</p>
+                      <p className="text-2xl font-bold text-foreground">
+                        {pendingCount}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Pending
+                      </p>
                     </div>
                   </motion.div>
                 </CardContent>
               </Card>
-                            <Card className="overflow-hidden">
+
+              <Card 
+                className="overflow-hidden cursor-pointer hover:shadow-md transition"
+                onClick={() => navigate("/doctor/appointments/monthly")}
+              >
                 <CardContent className="p-5">
                   <motion.div 
                     className="flex items-center gap-3"
@@ -147,7 +162,7 @@ const confirmedCount = todayAppointments.filter(a => a.status === "Confirmed").l
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-foreground">{monthlyAppointments.length}</p>
-                      <p className="text-sm text-muted-foreground">Monthly Appointment</p>
+                      <p className="text-sm text-muted-foreground">Monthly Appointments</p>
                     </div>
                   </motion.div>
                 </CardContent>

@@ -1,6 +1,6 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import appReducer from "./slices/appSlice";
-import userReducer from "./slices/userSlice";
+// import userReducer from "./slices/userSlice";
 import appointmentsReducer from "./slices/appointmentsSlice";
 
 import {
@@ -19,12 +19,12 @@ import patientsReducer from "./slices/patientsSlice";
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["app", "user","appointments","patients"],
+  whitelist: ["app","appointments","patients"],
 };
 
 const rootReducer = combineReducers({
   app: appReducer,    
-  user: userReducer,   
+  // user: userReducer,   
   appointments: appointmentsReducer,
   patients: patientsReducer,
 });
@@ -43,5 +43,5 @@ export const store = configureStore({
 
 export const persistor = persistStore(store);
 
-export type RootState = ReturnType<typeof store.getState>;
+export type RootState = ReturnType<typeof rootReducer>;
 export type AppDispatch = typeof store.dispatch;

@@ -1,3 +1,4 @@
+import { patientsData } from "@/data/patientsData";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface Patient {
@@ -78,7 +79,7 @@ interface PatientsState {
 }
 
 const initialState: PatientsState = {
-  list: [],
+  list: patientsData,
 };
 
 const patientsSlice = createSlice({

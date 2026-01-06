@@ -13,7 +13,6 @@ import {
   addMonths,
   subMonths,
   isSameDay,
-  parseISO,
 } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -24,22 +23,18 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateAppointment } from "@/redux/slices/appointmentsSlice";
 import { RootState } from "@/redux/store";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
-import { TodayPatientsDialog } from "./TodayPatientsDialog";
-
-import { useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export function AppointmentCalendar() {
   const dispatch = useDispatch();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  const doctorId = useSelector((state: RootState) => state.app.user?.id);
+  const doctorId = useSelector((state: RootState) => state.app.doctorUser?.id);
   const allAppointments = useSelector(
     (state: RootState) => state.appointments.list
   );
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const appointments = useMemo(() => {
     if (!doctorId) return [];
@@ -47,19 +42,6 @@ export function AppointmentCalendar() {
   }, [allAppointments, doctorId]);
 
   useAutoRefresh(() => {}, 60000);
-
-  /* ---------- 🔥 RESTORE FROM URL ---------- */
-  useEffect(() => {
-    const dateFromUrl = searchParams.get("calendarDate");
-    if (dateFromUrl) {
-      const parsed = parseISO(dateFromUrl);
-      if (!isNaN(parsed.getTime())) {
-        setSelectedDate(parsed);
-        setIsDialogOpen(true);
-        setCurrentMonth(parsed);
-      }
-    }
-  }, [searchParams]);
 
   /* ---------- AUTO DELAY ---------- */
   useEffect(() => {
@@ -101,10 +83,8 @@ export function AppointmentCalendar() {
           const aIsPM = a.time.includes("PM") && aHour !== 12;
           const bIsPM = b.time.includes("PM") && bHour !== 12;
 
-          const aTotal =
-            (aHour % 12 + (aIsPM ? 12 : 0)) * 60 + aMinute;
-          const bTotal =
-            (bHour % 12 + (bIsPM ? 12 : 0)) * 60 + bMinute;
+          const aTotal = (aHour % 12 + (aIsPM ? 12 : 0)) * 60 + aMinute;
+          const bTotal = (bHour % 12 + (bIsPM ? 12 : 0)) * 60 + bMinute;
 
           return aTotal - bTotal;
         }),
@@ -137,105 +117,90 @@ export function AppointmentCalendar() {
     }
   };
 
-  /* ---------- OPEN DIALOG ---------- */
-  const openDialogForDate = (date: Date) => {
-    setSelectedDate(date);
-    setIsDialogOpen(true);
-    setSearchParams({ calendarDate: date.toISOString() });
-  };
+  /* ---------- NAVIGATE TO DATE PAGE ---------- */
+  const openDatePage = (date: Date) => {
+    // Format date as YYYY-MM-DD for URL
+    const localDateStr = `${date.getFullYear()}-${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-  /* ---------- CLOSE DIALOG ---------- */
-  const closeDialog = () => {
-    setIsDialogOpen(false);
-    setSelectedDate(null);
-    setSearchParams({});
+    // Navigate to the patients page with the date parameter
+    navigate(`/doctor/calendar/patients?date=${localDateStr}`);
   };
 
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl shadow-lg border bg-card text-foreground"
-      >
-        {/* HEADER */}
-        <div className="flex justify-between items-center p-4 bg-primary text-white">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-          >
-            <ChevronLeft />
-          </Button>
-          <h2 className="text-lg font-bold">
-            {format(currentMonth, "MMMM yyyy")}
-          </h2>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-          >
-            <ChevronRight />
-          </Button>
-        </div>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl shadow-lg border bg-card text-foreground"
+    >
+      {/* HEADER */}
+      <div className="flex justify-between items-center p-4 bg-primary text-white">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+        >
+          <ChevronLeft />
+        </Button>
+        <h2 className="text-lg font-bold">
+          {format(currentMonth, "MMMM yyyy")}
+        </h2>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+        >
+          <ChevronRight />
+        </Button>
+      </div>
 
-        {/* WEEKDAYS */}
-        <div className="grid grid-cols-7 bg-muted/50">
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-            <div key={d} className="p-2 text-center font-semibold text-sm">
-              {d}
-            </div>
-          ))}
-        </div>
+      {/* WEEKDAYS */}
+      <div className="grid grid-cols-7 bg-muted/50">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+          <div key={d} className="p-2 text-center font-semibold text-sm">
+            {d}
+          </div>
+        ))}
+      </div>
 
-        {/* DAYS */}
-        <div className="grid grid-cols-7">
-          {days.map((day) => {
-            const appts = getAppointmentsForDate(day);
-            return (
-              <div
-                key={day.toISOString()}
-                onClick={() => openDialogForDate(day)}
-                className={cn(
-                  "p-2 min-h-[100px] border cursor-pointer",
-                  !isSameMonth(day, currentMonth) && "opacity-40",
-                  isToday(day) && "bg-primary/10"
+      {/* DAYS */}
+      <div className="grid grid-cols-7">
+        {days.map((day) => {
+          const appts = getAppointmentsForDate(day);
+          return (
+            <div
+              key={day.toISOString()}
+              onClick={() => openDatePage(day)}
+              className={cn(
+                "p-2 min-h-[100px] border cursor-pointer hover:bg-muted/20 transition-colors",
+                !isSameMonth(day, currentMonth) && "opacity-40",
+                isToday(day) && "bg-primary/10"
+              )}
+            >
+              <div className="text-sm font-semibold">{format(day, "d")}</div>
+              <div className="mt-1 space-y-1 max-h-[70px] overflow-y-auto pr-1">
+                {appts.slice(0, 3).map((apt) => (
+                  <div
+                    key={apt.id}
+                    className={cn(
+                      "text-xs px-1 rounded text-white",
+                      getStatusStyle(getEffectiveStatus(apt))
+                    )}
+                  >
+                    {apt.time} • {apt.patientName.split(" ")[0]}
+                  </div>
+                ))}
+                {appts.length > 3 && (
+                  <div className="text-xs text-muted-foreground">
+                    +{appts.length - 3} more
+                  </div>
                 )}
-              >
-                <div className="text-sm font-semibold">
-                  {format(day, "d")}
-                </div>
-                <div className="mt-1 space-y-1 max-h-[70px] overflow-y-auto pr-1">
-                  {appts.slice(0, 3).map((apt) => (
-                    <div
-                      key={apt.id}
-                      className={cn(
-                        "text-xs px-1 rounded text-white",
-                        getStatusStyle(getEffectiveStatus(apt))
-                      )}
-                    >
-                      {apt.time} • {apt.patientName.split(" ")[0]}
-                    </div>
-                  ))}
-                  {appts.length > 3 && (
-                    <div className="text-xs text-muted-foreground">
-                      +{appts.length - 3} more
-                    </div>
-                  )}
-                </div>
               </div>
-            );
-          })}
-        </div>
-      </motion.div>
-
-      {selectedDate && (
-        <TodayPatientsDialog
-          open={isDialogOpen}
-          onClose={closeDialog}
-          selectedDate={selectedDate}
-        />
-      )}
-    </>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
   );
 }

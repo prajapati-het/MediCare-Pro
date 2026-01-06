@@ -1,139 +1,107 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
-import { 
-  Building2, 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  Building2,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
   ArrowRight,
   Loader2,
-  Stethoscope
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { getDoctorMapping, getHospitalForAdminHandle, normalizeAdminHandle, normalizeDoctorHandle } from '@/data/userMappings';
-import { useDispatch, useSelector } from "react-redux";
+  Stethoscope,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import {
-  updateCurrentUser,
-  updateIsLoggedIn,
-  updateLoginMethod,
-} from "@/redux/slices/appSlice";
-import { DoctorType, AdminType } from "@/types/type";
-import { RootState } from '@/redux/store';
-import { appendUser } from '@/redux/slices/UserSlice';
-import Dashboard from './Dashboard';
-
+  getDoctorMapping,
+  getHospitalForAdminHandle,
+  normalizeAdminHandle,
+  normalizeDoctorHandle,
+} from "@/data/userMappings";
+import { useDispatch } from "react-redux";
+import { appendUser, updateLoginMethod } from "@/redux/slices/appSlice";
+import { doctorsData } from "@/data/doctorData";
+import { AdminType, DoctorType } from "@/types/type";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  
+
   const dispatch = useDispatch();
-  const users = useSelector((state: RootState) => state.user.users);
-
-
-  //const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // const handleSubmit = async (e: React.FormEvent) => {
+  /* ---------------- LOGIN ---------------- */
 
-
-
-  //   e.preventDefault();
-  //   setIsLoading(true);
-
-  //   try {
-  //     const success = await login(email, password);
-  //     if (success) {
-  //       toast({
-  //         title: "Welcome back!",
-  //         description: "You have successfully signed in.",
-  //       });
-  //       navigate(getLandingPath(email));
-  //     } else {
-  //       toast({
-  //         title: "Authentication failed",
-  //         description: "Please check your credentials and try again.",
-  //         variant: "destructive",
-  //       });
-  //     }
-  //   } catch (error) {
-  //     toast({
-  //       title: "Error",
-  //       description: "An unexpected error occurred.",
-  //       variant: "destructive",
-  //     });
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setIsLoading(true);
 
   try {
     const usernameRaw = email.split("@")[0].toLowerCase();
-
     const isAdmin = usernameRaw.endsWith("adm");
-    const isDoctor = usernameRaw.startsWith("dr");
-    const role: 'admin' | 'doctor' = isAdmin ? 'admin' : 'doctor';
+    const role: "admin" | "doctor" = isAdmin ? "admin" : "doctor";
 
+    let user: DoctorType | AdminType;
+    let hospitalId: string;
 
-    const normalizedUsername = isAdmin
-      ? normalizeAdminHandle(usernameRaw)
-      : normalizeDoctorHandle(usernameRaw);
+    if (role === "admin") {
+      const normalized = normalizeAdminHandle(usernameRaw);
+      const hospital = getHospitalForAdminHandle(normalized);
+      if (!hospital) throw new Error("Invalid admin");
 
-    const existingUser = users.find(
-      u => u.email.toLowerCase() === email.toLowerCase()
-    );
+      hospitalId = hospital.id;
 
-    if (!existingUser) {
-      if (isAdmin) {
-        const hospital = getHospitalForAdminHandle(normalizedUsername);
-        if (!hospital) throw new Error("Invalid admin");
+      // Build full admin object
+      user = {
+        id: Date.now(),
+        username: normalized,
+        email,
+        hospital: hospital.id,
+        role: "admin",
+        status: "active",
+        phone: "",
+        experience: "",
+        education: "",
+        licenseNumber: "",
+        availableDays: [],
+        rating: "",
+        picture: undefined,
+      };
+    } else {
+      const normalized = normalizeDoctorHandle(usernameRaw);
+      const mapping = getDoctorMapping(normalized);
+      if (!mapping) throw new Error("Invalid doctor");
 
-        dispatch(
-          appendUser({
-            username: normalizedUsername,
-            email,
-            hospital: hospital.id,
-            role
-          })
-        );
-      }
+      const doctor = doctorsData.find(d => d.id === mapping.doctorId);
+      if (!doctor) throw new Error("Doctor profile not found");
+
+      hospitalId = doctor.hospital;
+
+      // Use the full doctor object
+      user = {
+        ...doctor,
+        email, // override email if needed
+      };
     }
 
-    const loggedInUser =
-      existingUser ??
-      users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    // Dispatch the full user object
+    dispatch(appendUser({ user }));
+    dispatch(updateLoginMethod("email"));
 
-    if (!loggedInUser) throw new Error("Login failed");
-
-    dispatch(updateCurrentUser(loggedInUser));
-    dispatch(updateIsLoggedIn(true));
-
-    navigate(
-      isAdmin
-        ? `/hospitals/${loggedInUser.hospital}`
-        : `/dashboard`
-    );
-
+    navigate(role === "admin" ? `/hospitals/${hospitalId}` : "/dashboard");
   } catch {
     toast({
       title: "Authentication failed",
+      description: "Invalid credentials",
       variant: "destructive",
     });
   } finally {
@@ -144,26 +112,20 @@ export default function Auth() {
 
 
   const handleGoogleLogin = async () => {
-    // setIsGoogleLoading(true);
     try {
-      // const success = await loginWithGoogle();
-      // if (success) {
-      //   toast({
-      //     title: "Welcome!",
-      //     description: "You have successfully signed in with Google.",
-      //   });
-      //   navigate('/hospitals/city-general');
-      // }
-    } catch (error) {
+      // future google auth
+    } catch {
       toast({
         title: "Error",
-        description: "Google sign-in failed.",
+        description: "Google sign-in failed",
         variant: "destructive",
       });
     } finally {
       setIsGoogleLoading(false);
     }
   };
+
+  /* ---------------- UI ---------------- */
 
   return (
     <div className="min-h-screen flex overflow-x-hidden">
@@ -179,20 +141,16 @@ export default function Auth() {
               <Building2 className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">MediCare Pro</h1>
-              <p className="text-xs text-muted-foreground">Hospital Management</p>
+              <h1 className="text-xl font-bold">MediCare Pro</h1>
+              <p className="text-xs text-muted-foreground">
+                Hospital Management
+              </p>
             </div>
           </Link>
 
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            {isLogin ? 'Welcome back' : 'Create an account'}
+          <h2 className="text-2xl font-bold mb-2">
+            {isLogin ? "Welcome back" : "Create an account"}
           </h2>
-          <p className="text-muted-foreground mb-8">
-            {isLogin 
-              ? 'Enter your credentials to access your dashboard' 
-              : 'Get started with your hospital management journey'
-            }
-          </p>
 
           <Button
             variant="outline"
@@ -203,199 +161,57 @@ export default function Auth() {
             {isGoogleLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
+              "Continue with Google"
             )}
-            Continue with Google
           </Button>
 
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-            </div>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {!isLogin && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
+                  animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
                 >
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Dr. John Smith"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="mt-1.5"
-                  />
+                  <Label>Full Name</Label>
+                  <Input value={name} onChange={(e) => setName(e.target.value)} />
                 </motion.div>
               )}
             </AnimatePresence>
 
             <div>
-              <Label htmlFor="email">Email</Label>
-              <div className="relative mt-1.5">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@hospital.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
 
             <div>
-              <Label htmlFor="password">Password</Label>
-              <div className="relative mt-1.5">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
+              <Label>Password</Label>
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button type="button" onClick={() => setShowPassword(!showPassword)}>
+                {showPassword ? <EyeOff /> : <Eye />}
+              </button>
             </div>
 
-            {isLogin && (
-              <div className="flex items-center justify-end">
-                <a href="#" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </a>
-              </div>
-            )}
-
-            <Button type="submit" className="w-full gap-2" disabled={isLoading}>
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  {isLogin ? 'Sign In' : 'Create Account'}
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? <Loader2 className="animate-spin" /> : "Sign In"}
             </Button>
           </form>
-
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            {isLogin ? "Don't have an account?" : 'Already have an account?'}
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="ml-1 text-primary font-medium hover:underline"
-            >
-              {isLogin ? 'Sign up' : 'Sign in'}
-            </button>
-          </p>
-
-          <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border">
-            <p className="text-xs font-semibold text-muted-foreground mb-2">Demo Credentials</p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p><strong>Super Admin:</strong> super@hospital.com</p>
-              <p><strong>Admin:</strong> admin@hospital.com</p>
-              <p><strong>Password:</strong> any 4+ characters</p>
-            </div>
-          </div>
         </motion.div>
       </div>
 
-      <div 
-        className="hidden lg:flex flex-1 items-center justify-center relative overflow-hidden"
-        style={{ background: 'var(--gradient-hero)' }}
-      >
-        <div className="absolute inset-0">
-          {[...Array(10)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full bg-primary-foreground/10"
-              style={{
-                width: Math.random() * 200 + 100,
-                height: Math.random() * 200 + 100,
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.1, 0.2, 0.1],
-              }}
-              transition={{
-                duration: 4 + Math.random() * 2,
-                repeat: Infinity,
-                delay: Math.random() * 2,
-              }}
-            />
-          ))}
-        </div>
-
-        <div className="relative z-10 text-center max-w-md p-8">
-          <motion.div
-            className="p-4 rounded-2xl bg-primary-foreground/10 backdrop-blur-sm inline-block mb-6"
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 4, repeat: Infinity }}
-          >
-            <Stethoscope className="w-16 h-16 text-primary-foreground" />
-          </motion.div>
-          
-          <h2 className="text-3xl font-bold text-primary-foreground mb-4">
-            Manage Your Healthcare Network
-          </h2>
-          <p className="text-primary-foreground/80">
-            Streamline operations, track performance, and deliver exceptional patient care 
-            with our comprehensive hospital management platform.
-          </p>
-        </div>
+      <div className="hidden lg:flex flex-1 items-center justify-center">
+        <Stethoscope className="w-24 h-24 opacity-20" />
       </div>
     </div>
   );
-}
-
-function getLandingPath(email: string) {
-  const username = email.split('@')[0].toLowerCase();
-  if (username.endsWith('adn')) {
-    const hospital = getHospitalForAdminHandle(normalizeAdminHandle(username));
-    return hospital ? `/hospitals/${hospital.id}` : '/dashboard';
-  }
-  if (username.startsWith('dr')) {
-    const doctor = getDoctorMapping(normalizeDoctorHandle(username));
-    return doctor ? '/doctor/profile' : '/doctor/appointments';
-  }
-  return '/dashboard';
 }

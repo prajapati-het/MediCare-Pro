@@ -40,27 +40,22 @@ const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const DoctorAppointments = lazy(
   () => import("./pages/doctor/DoctorAppointments")
 );
-const DoctorPendingAppointments = lazy(
-  () => import("./pages/doctor/DoctorPendingAppointments")
-);
 const DoctorPatients = lazy(() => import("./pages/doctor/DoctorPatients"));
 const DoctorProfile = lazy(() => import("./pages/doctor/DoctorProfile"));
-const AppointmentDetail = lazy(
-  () => import("./pages/doctor/AppointmentDetail")
-);
-const PatientDetail = lazy(
-  () => import("./pages/doctor/PatientDetails/PatientDetail")
-);
+const AppointmentDetail = lazy(() => import("./pages/doctor/AppointmentDetail"));
+const PatientDetail = lazy(() => import("./pages/doctor/PatientDetails/PatientDetail"));
 
 const EditDoctor = lazy(() => import("./pages/EditDoctor"));
 const EditStaff = lazy(() => import("./pages/EditStaff"));
 const EditHospital = lazy(() => import("./pages/EditHospital"));
 
-const PrintReportPage = lazy(
-  () => import("./components/modals/PrintableReportPage")
-);
+const PrintReportPage = lazy(() => import("./components/modals/PrintableReportPage"));
 
-const PatientBill = lazy( () => import("./pages/doctor/PatientDetails/bill/PatientBill"))
+const PatientBill = lazy(() => import("./pages/doctor/PatientDetails/bill/PatientBill"));
+
+const DoctorAppointmentsView = lazy(() => import("./pages/doctor/DoctorAppointmentsView"));
+
+const TodayPatientsPage = lazy(()=> import("./components/TodayPatientsPage"));
 
 const queryClient = new QueryClient();
 
@@ -85,7 +80,12 @@ const App = () => (
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
-                <BrowserRouter>
+                <BrowserRouter
+                  future={{
+                    v7_relativeSplatPath: true,
+                    v7_startTransition: true
+                  }}
+                >
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
                       {/* Public Routes */}
@@ -219,6 +219,7 @@ const App = () => (
                       />
 
                       {/* Doctor Routes */}
+                      {/* Main dashboard */}
                       <Route
                         path="/doctor/appointments"
                         element={
@@ -227,22 +228,18 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
-                      <Route
-                        path="/doctor/appointments/:id"
+
+                      {/* Filtered appointments view (must come before :id route) */}
+                      <Route 
+                        path="/doctor/appointments/:filter" 
                         element={
                           <ProtectedRoute allowedRoles={["doctor"]}>
-                            <AppointmentDetail />
+                            <DoctorAppointmentsView />
                           </ProtectedRoute>
-                        }
+                        } 
                       />
-                      <Route
-                        path="/doctor/pending-appointments"
-                        element={
-                          <ProtectedRoute allowedRoles={["doctor"]}>
-                            <DoctorPendingAppointments />
-                          </ProtectedRoute>
-                        }
-                      />
+
+                      {/* Other doctor routes */}
                       <Route
                         path="/doctor/patients"
                         element={
@@ -267,6 +264,16 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
+
+                      <Route
+                        path="/doctor/calendar/patients"
+                        element={
+                          <ProtectedRoute allowedRoles={["doctor"]}>
+                            <TodayPatientsPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      
 
                       {/* Legacy */}
                       <Route

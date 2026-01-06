@@ -48,41 +48,64 @@ export const selectPatientsByDoctor = createSelector(
     patients.filter(p => p.doctorId === doctorId)
 );
 
-export const selectPendingAppointmentsByDoctor =
-  (doctorId: number) => (state: RootState) =>
-    state.appointments.list.filter(
+export const selectPendingAppointmentsByDoctor = createSelector(
+  [
+    (state: RootState) => state.appointments.list,
+    (_: RootState, doctorId: number) => doctorId,
+  ],
+  (appointments, doctorId) =>
+    appointments.filter(
       a => a.doctorId === doctorId && a.status === "Pending"
-    );
+    )
+);
 
-export const selectAppointmentById =
-  (id: number) => (state: RootState) =>
-    state.appointments.list.find(a => a.id === id);
+
+export const selectAppointmentById = createSelector(
+  [
+    (state: RootState) => state.appointments.list,
+    (_: RootState, id: number) => id,
+  ],
+  (appointments, id) =>
+    appointments.find(a => a.id === id)
+);
+
 
 
 
   // Selector to get all appointments from redux
 const selectAppointments = (state: RootState) => state.appointments.list;
 
-// Selector to enrich appointments with patient info
-export const selectAppointmentsWithPatientInfo = createSelector(
-  [selectAppointments],
-  (appointments: Appointment[]) => {
-    return appointments.map((apt) => {
-      const patient = patientsData.find((p) => p.id === apt.patientId);
-      return {
-        ...apt,
-        patientName: patient?.name || "—",
-        condition: patient?.condition || "—",
-        age: patient?.age ?? "—",
-        height: patient?.vitals.height ?? "—",
-        weight: patient?.vitals.weight ?? "—",
-        contact: patient?.phone || "—",
-        email: patient?.email || "—",
-        tag: patient?.tag || "_"
-      };
-    });
-  }
-);
+export const selectAppointmentsWithPatientInfoByDoctor = (doctorId: string | number) =>
+  createSelector(
+    [
+      (state: RootState) => state.appointments.list,
+      (state: RootState) => state.patients.list,
+    ],
+    (appointments, patients) => {
+      const patientMap = new Map(
+        patients.map(p => [p.id, p])
+      );
+
+      return appointments
+        .filter(apt => apt.doctorId === doctorId) // ✅ doctor match
+        .map(apt => {
+          const patient = patientMap.get(apt.patientId);
+
+          return {
+            ...apt,
+            patientName: patient?.name ?? "—",
+            condition: patient?.condition ?? "—",
+            age: patient?.age ?? "—",
+            height: patient?.vitals?.height ?? "—",
+            weight: patient?.vitals?.weight ?? "—",
+            contact: patient?.phone ?? "—",
+            email: patient?.email ?? "—",
+            tag: patient?.tag ?? "_",
+          };
+        });
+    }
+  );
+
 
 
 export const selectPatientById = (patientId: number) => (state: RootState) =>
