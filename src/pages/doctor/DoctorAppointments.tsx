@@ -16,7 +16,7 @@ import { useAppSelector } from '@/redux/hooks';
 import { useNavigate } from 'react-router-dom';
 
 export default function DoctorAppointments() {
-  const { user } = useSelector((state: RootState) => state.app);
+  const user  = useSelector((state: RootState) => state.app.doctorUser);
   const navigate = useNavigate();
 
   const containerVariants = {

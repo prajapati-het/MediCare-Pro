@@ -508,19 +508,21 @@ export default function TodayPatientsPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gradient-to-r from-slate-50 to-blue-50 hover:from-slate-100 hover:to-blue-100 transition-all duration-200">
-                  <TableHead className="text-center font-semibold text-slate-700">View</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Name</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Condition</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Problem</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Age</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Height</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Weight</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Contact</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Email</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Status</TableHead>
-                  <TableHead className="text-center font-semibold text-slate-700">Actions</TableHead>
+                  <TableHead className="text-center font-semibold text-slate-700 w-[4%]">View</TableHead>
+                  <TableHead className="font-semibold text-slate-700 w-[10%]">Name</TableHead>
+                  <TableHead className="font-semibold text-slate-700 w-[8%]">Condition</TableHead>
+                  <TableHead className="font-semibold text-slate-700 w-[12%]">Problem</TableHead>
+                  <TableHead className="font-semibold text-slate-700 w-[4%]">Age</TableHead>
+                  <TableHead className="font-semibold text-slate-700 w-[6%]">Height</TableHead>
+                  <TableHead className="font-semibold text-slate-700 w-[6%]">Weight</TableHead>
+                  <TableHead className="font-semibold text-slate-700 w-[10%]">Contact</TableHead>
+                  <TableHead className="font-semibold text-slate-700 w-[16%]">Email</TableHead>
+                  <TableHead className="font-semibold text-slate-700 w-[8%]">Status</TableHead>
+                  <TableHead className="font-semibold text-slate-700 w-[6%]">Time</TableHead>
+                  <TableHead className="text-center font-semibold text-slate-700 w-[5%]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
+
 
               <TableBody>
                 {filteredAppointments.map((apt, idx) => (
@@ -597,6 +599,9 @@ export default function TodayPatientsPage() {
                         {apt.status}
                       </Badge>
                     </TableCell>
+                    
+                    <TableCell className="text-slate-700 ">{apt.time}</TableCell>
+                    
 
                     <TableCell className="text-center">
                       <Button

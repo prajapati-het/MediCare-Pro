@@ -205,11 +205,11 @@ const convertTo24Hour = (time?: string | null) => {
                             <Badge variant="outline" className="text-sm px-3 py-1">
                               {currentUser.hospital || "N/A"}
                             </Badge>
-                            <Badge 
+                            {/* <Badge 
                               className={cn("text-sm px-3 py-1 border", getStatusConfig(currentStatus).badgeColor)}
                             >
                               {getStatusConfig(currentStatus).label}
-                            </Badge>
+                            </Badge> */}
                           </div>
                         </div>
                         

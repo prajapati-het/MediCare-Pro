@@ -60,11 +60,12 @@ const systemItems: SidebarItem[] = [
 
 export function DashboardSidebar() {
   const dispatch = useDispatch();
-  const { user, isLoggedIn } = useSelector(
+  const { doctorUser, adminUser, isLoggedIn } = useSelector(
     (state: RootState) => state.app
   );
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const user = doctorUser ?? adminUser;
 
   const filterByRole = (items: SidebarItem[]) => {
     return items.filter(item => {

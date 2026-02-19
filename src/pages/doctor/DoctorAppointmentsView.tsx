@@ -33,7 +33,7 @@ export default function DoctorAppointmentsView() {
 
   console.log(filter);
 
-  const user = useSelector((state: RootState) => state.app.user);
+  const user = useSelector((state: RootState) => state.app.doctorUser);
   const allAppointments = useSelector((state: RootState) => state.appointments.list);
 
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);

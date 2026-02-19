@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
 import { IntroLoader } from '@/components/IntroLoader';
 import { HospitalSlideshow } from '@/components/HospitalSlideshow';
-import { DashboardPreview } from '@/components/DashboardPreview';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -48,7 +47,7 @@ export default function Index() {
   const [showIntro, setShowIntro] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
   const dispatch = useDispatch();
-  const { user, isLoggedIn } = useSelector(
+  const { isLoggedIn } = useSelector(
     (state: RootState) => state.app
   );
   const navigate = useNavigate();
@@ -226,26 +225,6 @@ export default function Index() {
                 </motion.div>
               ))}
             </div>
-          </div>
-        </section>
-
-        <section className="py-16 lg:py-24 bg-muted/30">
-          <div className="container mx-auto px-4 lg:px-8">
-            <motion.div
-              className="text-center mb-12"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Dashboard Preview
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Get a glimpse of the powerful analytics and management tools at your fingertips.
-              </p>
-            </motion.div>
-
-            <DashboardPreview />
           </div>
         </section>
 

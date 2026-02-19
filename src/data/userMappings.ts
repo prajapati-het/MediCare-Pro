@@ -86,11 +86,8 @@ export function getHospitalForAdminHandle(handle: string) {
 
 export function getDoctorMapping(handle: string) {
   const normalized = normalizeDoctorHandle(handle);
-
-  // 1️⃣ direct match
   let mapping = doctorHospitalMap[normalized];
 
-  // 2️⃣ fallback: insert dot if missing
   if (!mapping && !normalized.includes(".")) {
     const dotted = normalized.replace(
       /^([a-z]+)([a-z]+)$/i,
