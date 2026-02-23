@@ -62,7 +62,7 @@ export interface signupCredentialsType {
 
 export interface Appointment {
   id: number;
-  doctorId: number;
+  doctorCode: number;
   patientId: number;
   patientName: string;
   time: string;
@@ -72,7 +72,7 @@ export interface Appointment {
   notes?: string;
   duration: number;
   room: string;
-  cancelReason?: string
+  cancelReason?: string;
 }
 
 
@@ -192,4 +192,16 @@ export interface Hospital {
   totalBeds: number;
   status: "Operational" | "Maintenance" | "Closed";
   establishedYear: number;
+}
+
+
+export interface AppointmentWithPatientInfo extends Appointment {
+  patientName: string;
+  condition: string;
+  age: number | string;     
+  height: string;             
+  weight: string;           
+  contact: string;         
+  email: string;           
+  tag: string;               
 }

@@ -9,6 +9,7 @@ import {
   Hospital,
   googleSignInResponseType,
   LoginResponse,
+  AppointmentWithPatientInfo,
 } from "@/types/type";
 
 export const api = createApi({
@@ -117,6 +118,29 @@ export const api = createApi({
       invalidatesTags: ["Appointment"],
     }),
 
+
+    getTodayAppointments: builder.query<Appointment[], { doctorCode: string; date: string }>({
+      query: ({ doctorCode, date }) => `/appointments/doctor/${doctorCode}/day/${date}`,
+      providesTags: ["Appointment"],
+    }),
+
+    getMonthlyAppointments: builder.query<Appointment[], { doctorCode: string; month: number; year: number }>({
+        query: ({ doctorCode, month, year }) => {
+          const monthStr = month.toString().padStart(2, "0");
+          return `/appointments/doctor/${doctorCode}/month/${year}-${monthStr}`;
+        },
+        providesTags: ["Appointment"],
+      }),
+
+      // slices/api.ts
+      getAppointmentsWithPatientInfo: builder.query<
+        AppointmentWithPatientInfo[],  // Type includes patient info
+        string                     // doctorCode
+      >({
+        query: (doctorCode) => `/appointments/doctor/${doctorCode}/with-patients`,
+        providesTags: ["Appointment"],
+      }),
+
     /* ===================== PATIENTS ===================== */
 
     getPatients: builder.query<Patient[], void>({
@@ -145,6 +169,9 @@ export const {
   useGetAppointmentsQuery,
   useGetAppointmentByIdQuery,
   useUpdateAppointmentStatusMutation,
+  useGetTodayAppointmentsQuery,
+  useGetMonthlyAppointmentsQuery,
+  useGetAppointmentsWithPatientInfoQuery,
 
   useGetPatientsQuery,
   useGetPatientByIdQuery,

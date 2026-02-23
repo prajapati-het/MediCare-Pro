@@ -5,7 +5,7 @@ const AppointmentSchema = new Schema({
         required: true,
         unique: true,
     },
-    doctorId: {
+    doctorCode: {
         type: Number,
         required: true,
     },

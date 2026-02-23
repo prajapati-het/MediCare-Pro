@@ -13,11 +13,12 @@ interface PrintPreviewModalProps {
   open: boolean;
   onClose: () => void;
   patient: Patient;
+  hospitalName: string;
 }
 
 const sections = ["Vitals", "Body", "Medical", "Labs", "Prescriptions", "History"];
 
-export default function PrintPreviewModal({ open, onClose, patient }: PrintPreviewModalProps) {
+export default function PrintPreviewModal({ open, onClose, hospitalName }: PrintPreviewModalProps) {
   const [selectedSections, setSelectedSections] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -49,10 +50,7 @@ export default function PrintPreviewModal({ open, onClose, patient }: PrintPrevi
   };
 
   const renderPrintContent = () => (
-    <PrintableReport
-        patient={patient}
-        selectedSections={selectedSections}
-      />
+    <PrintableReport selectedSections={selectedSections}/>
   );
 
   return (
@@ -216,6 +214,8 @@ export default function PrintPreviewModal({ open, onClose, patient }: PrintPrevi
       {/* Hidden print container - rendered outside dialog */}
       {showPreview && (
         <div id="printable-content" className="hidden print:block">
+          {/* Watermark — fixed/centered on every printed page */}
+          <div className="print-watermark">{hospitalName}</div>
           {renderPrintContent()}
         </div>
       )}

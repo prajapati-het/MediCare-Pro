@@ -6,28 +6,25 @@ import PatientHeader from "./PatientHeader";
 import PatientHeroCard from "./PatientHeroCard";
 import PatientTabs from "./tabs/PatientTabs";
 import PrintPreviewModal from "@/components/modals/PrintPreviewModal";
-import { selectPatientById } from "@/selectors/selectors";
 import { useDispatch, useSelector } from "react-redux";
-import { patientsData } from "@/data/patientsData";
+// import { patientsData } from "@/data/patientsData";
 import { setPatients } from "@/redux/slices/patientsSlice";
+import { useGetPatientByIdQuery, useGetPatientsQuery } from "@/redux/slices/api";
+import { selectPatientById } from "@/redux/slices/PatientSlice";
 
 export default function PatientDetail() {
 
-  const dispatch = useDispatch();
-  useEffect(() => {
-  dispatch(setPatients(patientsData));
-}, [dispatch]);
-
-  const navigate = useNavigate();
   const { id } = useParams();
-
-  const patient = useSelector(selectPatientById(Number(id)));
+  const navigate = useNavigate();
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedSections, setSelectedSections] = useState<string[]>([]);
 
-  if (!patient) {
-    return <div>Patient not found</div>;
-  }
+  // Fetch single patient via RTK Query
+  const { data: patient, isLoading, isError } = useGetPatientByIdQuery(id!);
+
+  if (isLoading) return <div>Loading patient...</div>;
+  if (isError || !patient) return <div>Patient not found</div>;
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,7 +61,8 @@ export default function PatientDetail() {
       <PrintPreviewModal
         open={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
-        patient={patient}
+        patient={patient} 
+        hospitalName={""}        
         // selectedSections={selectedSections}
       />
     </div>

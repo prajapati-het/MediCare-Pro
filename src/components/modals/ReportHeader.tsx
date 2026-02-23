@@ -9,7 +9,7 @@ export default function ReportHeader() {
   const patient = useSelector((state: RootState) =>
     state.patients.list.find(p => p.id === Number(id))
   );
-  const doctor = useSelector((state: RootState) => state.app.user);
+  const doctor = useSelector((state: RootState) => state.app.doctorUser);
   const reportUrl = `${window.location.origin}/reports/print/${patient?.id}`;
 
   return (

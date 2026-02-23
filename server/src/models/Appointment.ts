@@ -2,7 +2,7 @@ import { Schema, model } from "mongoose";
 
 export interface IAppointment {
   id: number;
-  doctorId: number;
+  doctorCode: number;
   patientId: number;
   patientName: string;
   time: string;
@@ -22,7 +22,7 @@ const AppointmentSchema = new Schema<IAppointment>(
       required: true,
       unique: true,
     },
-    doctorId: {
+    doctorCode: {
       type: Number,
       required: true,
     },

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { skipToken } from "@reduxjs/toolkit/query/react";
 import { 
   Calendar, 
   Clock,
@@ -14,10 +15,15 @@ import { AppointmentCalendar } from '@/components/AppointmentCalendar';
 import { selectMonthlyAppointmentsByDoctor, selectTodayAppointmentsByDoctor } from '@/selectors/selectors';
 import { useAppSelector } from '@/redux/hooks';
 import { useNavigate } from 'react-router-dom';
+import { useGetMonthlyAppointmentsQuery, useGetTodayAppointmentsQuery } from '@/redux/slices/api';
+import { useEffect } from 'react';
 
 export default function DoctorAppointments() {
   const user  = useSelector((state: RootState) => state.app.doctorUser);
+  const doctorCode = useSelector((state: RootState) => state.app.doctorCode);
   const navigate = useNavigate();
+
+  
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -36,20 +42,23 @@ export default function DoctorAppointments() {
 
   const date = new Date();
   const today = date.toISOString().split("T")[0];
-  const month = date.getMonth();   
+  const month = date.getMonth() + 1;   
   const year = date.getFullYear();
 
-  const todayAppointments = useAppSelector(state =>
-    doctorId
-      ? selectTodayAppointmentsByDoctor(state, doctorId, today)
-      : []
+  console.log(doctorCode, today, month, year);
+
+  // Today appointments
+  const { data: todayAppointments = [], isLoading: todayLoading, error: todayError } = useGetTodayAppointmentsQuery(
+    doctorCode ? { doctorCode, date: today } : skipToken
   );
 
-  const monthlyAppointments = useAppSelector(state =>
-    doctorId
-      ? selectMonthlyAppointmentsByDoctor(state, doctorId, month, year)
-      : []
+  // Monthly appointments
+  const { data: monthlyAppointments = [], isLoading: monthLoading, error: monthError } = useGetMonthlyAppointmentsQuery(
+    doctorCode ? { doctorCode, month, year } : skipToken
   );
+
+  console.log("Today:", todayAppointments);        // always an array
+  console.log("Monthly:", monthlyAppointments);    // always an array
 
   const pendingCount = monthlyAppointments.filter(a => a.status === "Pending").length;
   const confirmedCount = monthlyAppointments.filter(a => a.status === "Confirmed").length;

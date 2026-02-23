@@ -55,12 +55,10 @@ export default function DoctorPatients() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(9);
 
-  const patients = useMemo(() => {
-    if (user?.id) {
-      return getPatientsByDoctorId(user.id);
-    }
-    return [];
-  }, [user?.id]);
+
+  const patients = useSelector((state: RootState) => state.doctor.patients);
+
+  console.log(patients)
 
   const filteredAndSortedPatients = useMemo(() => {
     const filtered = patients.filter((patient) => {

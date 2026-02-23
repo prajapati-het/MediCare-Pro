@@ -18,87 +18,93 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import { Appointment } from "@/data/appointmentsData";
 import { useDispatch, useSelector } from "react-redux";
 import { updateAppointment } from "@/redux/slices/appointmentsSlice";
 import { RootState } from "@/redux/store";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { useNavigate } from "react-router-dom";
+import { useGetAppointmentsQuery } from "@/redux/slices/api";
+import { useAppDispatch } from "@/redux/hooks";
+import { Appointment } from "@/types/type";
 
 export function AppointmentCalendar() {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const doctorId = useSelector((state: RootState) => state.app.doctorUser?.id);
-  const allAppointments = useSelector(
-    (state: RootState) => state.appointments.list
-  );
-
+  const doctorCode = useSelector((state: RootState) => state.app.doctorCode);
+  const { data: allAppointments = [], isLoading, error } = useGetAppointmentsQuery();
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  const appointments = useMemo(() => {
-    if (!doctorId) return [];
-    return allAppointments.filter((a) => a.doctorId === doctorId);
-  }, [allAppointments, doctorId]);
+  const dispatch = useAppDispatch();
 
-  useAutoRefresh(() => {}, 60000);
+// Filter appointments for this doctor
+const appointments = useMemo(() => {
+  if (!doctorCode) return [];
+  return allAppointments.filter((a) => a.doctorCode === Number(doctorCode));
+}, [allAppointments, doctorCode]);
 
-  /* ---------- AUTO DELAY ---------- */
-  useEffect(() => {
-    const now = new Date();
-    appointments.forEach((apt) => {
-      const apptDateTime = new Date(`${apt.date} ${apt.time}`);
-      if (now > apptDateTime && ["Pending", "Confirmed"].includes(apt.status)) {
-        dispatch(
-          updateAppointment({ id: apt.id, changes: { status: "Delayed" } })
-        );
-      }
-    });
-  }, [appointments, dispatch]);
+// Auto-refresh logic (optional)
+useAutoRefresh(() => {}, 60000);
 
-  const getEffectiveStatus = useCallback((apt: Appointment) => {
-    if (["Cancelled", "Completed"].includes(apt.status)) return apt.status;
-    const now = new Date();
+/* ---------- AUTO DELAY ---------- */
+useEffect(() => {
+  const now = new Date();
+  appointments.forEach((apt) => {
     const apptDateTime = new Date(`${apt.date} ${apt.time}`);
-    return now > apptDateTime ? "Delayed" : apt.status;
-  }, []);
+    if (now > apptDateTime && ["Pending", "Confirmed"].includes(apt.status)) {
+      dispatch(
+        updateAppointment({ id: apt.id, changes: { status: "Delayed" } })
+      );
+    }
+  });
+}, [appointments, dispatch]);
 
-  const isVisibleOnCalendar = useCallback(
-    (apt: Appointment) => {
-      const status = getEffectiveStatus(apt);
-      return ["Pending", "Confirmed", "Delayed"].includes(status);
-    },
-    [getEffectiveStatus]
-  );
+// Effective status based on current time
+const getEffectiveStatus = useCallback((apt: Appointment) => {
+  if (["Cancelled", "Completed"].includes(apt.status)) return apt.status;
+  const now = new Date();
+  const apptDateTime = new Date(`${apt.date} ${apt.time}`);
+  return now > apptDateTime ? "Delayed" : apt.status;
+}, []);
 
-  const getAppointmentsForDate = useCallback(
-    (date: Date) =>
-      appointments
-        .filter(
-          (a) => isSameDay(new Date(a.date), date) && isVisibleOnCalendar(a)
-        )
-        .sort((a, b) => {
-          const [aHour, aMinute] = a.time.split(/[: ]/).map(Number);
-          const [bHour, bMinute] = b.time.split(/[: ]/).map(Number);
-          const aIsPM = a.time.includes("PM") && aHour !== 12;
-          const bIsPM = b.time.includes("PM") && bHour !== 12;
+// Determine if appointment should be shown on calendar
+const isVisibleOnCalendar = useCallback(
+  (apt: Appointment) => {
+    const status = getEffectiveStatus(apt);
+    return ["Pending", "Confirmed", "Delayed"].includes(status);
+  },
+  [getEffectiveStatus]
+);
 
-          const aTotal = (aHour % 12 + (aIsPM ? 12 : 0)) * 60 + aMinute;
-          const bTotal = (bHour % 12 + (bIsPM ? 12 : 0)) * 60 + bMinute;
+// Get appointments for a specific date, sorted by time
+const getAppointmentsForDate = useCallback(
+  (date: Date) =>
+    appointments
+      .filter(
+        (a) => isSameDay(new Date(a.date), date) && isVisibleOnCalendar(a)
+      )
+      .sort((a, b) => {
+        const [aHour, aMinute] = a.time.split(/[: ]/).map(Number);
+        const [bHour, bMinute] = b.time.split(/[: ]/).map(Number);
+        const aIsPM = a.time.includes("PM") && aHour !== 12;
+        const bIsPM = b.time.includes("PM") && bHour !== 12;
 
-          return aTotal - bTotal;
-        }),
-    [appointments, isVisibleOnCalendar]
-  );
+        const aTotal = (aHour % 12 + (aIsPM ? 12 : 0)) * 60 + aMinute;
+        const bTotal = (bHour % 12 + (bIsPM ? 12 : 0)) * 60 + bMinute;
 
-  const days = useMemo(
-    () =>
-      eachDayOfInterval({
-        start: startOfWeek(startOfMonth(currentMonth)),
-        end: endOfWeek(endOfMonth(currentMonth)),
+        return aTotal - bTotal;
       }),
-    [currentMonth]
-  );
+  [appointments, isVisibleOnCalendar]
+);
+
+// Get calendar days for current month view
+const days = useMemo(
+  () =>
+    eachDayOfInterval({
+      start: startOfWeek(startOfMonth(currentMonth)),
+      end: endOfWeek(endOfMonth(currentMonth)),
+    }),
+  [currentMonth]
+);
 
   const getStatusStyle = (status: string) => {
     switch (status) {

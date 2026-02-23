@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { useAppSelector } from '@/redux/hooks';
 import { selectPatientsByDoctor } from '@/selectors/selectors';
 import { useGetDoctorDetailsQuery, useGetDoctorPatientsQuery } from '@/redux/slices/api';
+import { setDoctorInfo } from '@/redux/slices/doctorSlice';
 
 type DoctorStatus = "active" | "on-leave" | "busy";
 
@@ -44,6 +45,8 @@ export default function DoctorProfile() {
     });
 
   currentUser = doctor;
+
+  dispatch(setDoctorInfo(doctor))
 
   console.log(apiData)
 

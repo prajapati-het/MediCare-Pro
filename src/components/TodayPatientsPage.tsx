@@ -30,46 +30,45 @@ import { Appointment, AppointmentStatus } from "@/data/appointmentsData";
 import { updateAppointment } from "@/redux/slices/appointmentsSlice";
 import { selectAppointmentsWithPatientInfoByDoctor } from "@/selectors/selectors";
 import { RootState } from "@/redux/store";
+import { useGetAppointmentsWithPatientInfoQuery } from "@/redux/slices/api";
+import { AppointmentWithPatientInfo } from "@/types/type";
 
 export default function TodayPatientsPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { doctorId, doctorEmail } = useSelector(
-    (state: RootState) => ({
-      doctorId: state.app.doctorUser?.id,
-      doctorEmail: state.app.doctorUser?.email,
-    }),
-    shallowEqual
-  );
+  const { doctorCode, doctorEmail } = useSelector(
+  (state: RootState) => ({
+    doctorCode: state.app.doctorCode,
+    doctorEmail: state.app.doctorUser?.email,
+  }),
+  shallowEqual
+);
 
-  const appointments = useSelector(
-    selectAppointmentsWithPatientInfoByDoctor(doctorId)
-  );
+
+  const { data: appointments = [], isLoading } =   useGetAppointmentsWithPatientInfoQuery(doctorCode);
+
 
   const [tagFilter, setTagFilter] = useState<string[]>([]);
-  const [statusFilter, setStatusFilter] = useState<AppointmentStatus[]>([]);
-  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] =
-    useState<Appointment | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [actionPopupId, setActionPopupId] = useState<string | null>(null);
+const [statusFilter, setStatusFilter] = useState<AppointmentStatus[]>([]);
+const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+const [selectedAppointment, setSelectedAppointment] =
+  useState<AppointmentWithPatientInfo | null>(null);
+const [showFilters, setShowFilters] = useState(false);
+const [actionPopupId, setActionPopupId] = useState<string | null>(null);
 
-  // Get date from URL params
-  const [effectiveDate, setEffectiveDate] = useState<Date | null>(null);
+const [effectiveDate, setEffectiveDate] = useState<Date | null>(null);
 
   useEffect(() => {
-    const dateParam = searchParams.get("date");
-    if (dateParam) {
-      const [y, m, d] = dateParam.split("-").map(Number);
-      const localDate = new Date(y, m - 1, d);
-      setEffectiveDate(localDate);
-    } else {
-      // If no date in URL, redirect back to calendar
-      navigate("/doctor/appointments");
-    }
-  }, [searchParams, navigate]);
+  const dateParam = searchParams.get("date");
+  if (dateParam) {
+    const [y, m, d] = dateParam.split("-").map(Number);
+    setEffectiveDate(new Date(y, m - 1, d));
+  } else {
+    navigate("/doctor/appointments");
+  }
+}, [searchParams, navigate]);
 
   /* ---------------- FILTERS FROM URL ---------------- */
   const monthFilter = searchParams.get("month") === "1";
@@ -127,68 +126,57 @@ export default function TodayPatientsPage() {
     a.getDate() === b.getDate();
 
   /* ---------------- FILTER LOGIC ---------------- */
-  const filteredAppointments = useMemo(() => {
-    if (!effectiveDate || !doctorId) return [];
 
-    const parseAppointmentDay = (dateStr: string) =>
-      toLocalDay(new Date(dateStr));
+const filteredAppointments = useMemo(() => {
+  if (!effectiveDate || !doctorCode) return [];
 
-    const effectiveDay = toLocalDay(effectiveDate);
+  const parseDay = (dateStr: string) => toLocalDay(new Date(dateStr));
+  const effectiveDay = toLocalDay(effectiveDate);
 
-    const monthStart = startOfMonth(effectiveDay);
-    const monthEnd = endOfMonth(effectiveDay);
-    const weekStart = startOfWeek(effectiveDay);
-    const weekEnd = endOfWeek(effectiveDay);
+  const monthStart = startOfMonth(effectiveDay);
+  const monthEnd = endOfMonth(effectiveDay);
+  const weekStart = startOfWeek(effectiveDay);
+  const weekEnd = endOfWeek(effectiveDay);
 
-    const rangeStart = rangeFilter.start
-      ? parseAppointmentDay(rangeFilter.start)
-      : null;
-    const rangeEnd = rangeFilter.end
-      ? parseAppointmentDay(rangeFilter.end)
-      : null;
+  const rangeStart = searchParams.get("start") ? parseDay(searchParams.get("start")!) : null;
+  const rangeEnd = searchParams.get("end") ? parseDay(searchParams.get("end")!) : null;
 
-    return appointments.filter((apt) => {
-      if (apt.doctorId !== doctorId) return false;
+  const searchName = (searchParams.get("search") || "").toLowerCase();
+  const monthFilter = searchParams.get("month") === "1";
+  const weekFilter = searchParams.get("week") === "1";
 
-      const aptDay = parseAppointmentDay(apt.date);
+  return appointments.filter((apt) => {
+    if (apt.doctorCode !== Number(doctorCode)) return false;
 
-      // ---- DATE FILTER PRIORITY ----
-      if (rangeStart && rangeEnd) {
-        if (aptDay < rangeStart || aptDay > rangeEnd) return false;
-      } else if (weekFilter) {
-        if (aptDay < weekStart || aptDay > weekEnd) return false;
-      } else if (monthFilter || tagFilter.length > 0) {
-        if (aptDay < monthStart || aptDay > monthEnd) return false;
-      } else {
-        if (!isSameLocalDay(aptDay, effectiveDay)) return false;
-        if (!DAY_VIEW_ALLOWED_STATUSES.includes(apt.status)) return false;
-      }
+    const aptDay = parseDay(apt.date);
 
-      // ---- SEARCH ----
-      if (searchName && !apt.patientName.toLowerCase().includes(searchName))
-        return false;
+    // ---- DATE FILTER PRIORITY ----
+    if (rangeStart && rangeEnd) {
+      if (aptDay < rangeStart || aptDay > rangeEnd) return false;
+    } else if (weekFilter) {
+      if (aptDay < weekStart || aptDay > weekEnd) return false;
+    } else if (monthFilter || tagFilter.length > 0) {
+      if (aptDay < monthStart || aptDay > monthEnd) return false;
+    } else {
+      if (!isSameLocalDay(aptDay, effectiveDay)) return false;
+      if (!DAY_VIEW_ALLOWED_STATUSES.includes(apt.status as AppointmentStatus)) return false;
+    }
 
-      // ---- TAG ----
-      if (tagFilter.length && !tagFilter.includes(apt.tag)) return false;
+    // ---- SEARCH ----
+    if (searchName && !apt.patientName.toLowerCase().includes(searchName)) return false;
 
-      // ---- STATUS ----
-      if (statusFilter.length && !statusFilter.includes(apt.status)) return false;
+    // ---- TAG ----
+    if (tagFilter.length && !tagFilter.includes(apt.tag ?? "_")) return false;
 
-      return true;
-    });
-  }, [
-    effectiveDate,
-    doctorId,
-    rangeFilter.start,
-    rangeFilter.end,
-    appointments,
-    weekFilter,
-    monthFilter,
-    tagFilter,
-    statusFilter,
-    searchName,
-    DAY_VIEW_ALLOWED_STATUSES,
-  ]);
+    // ---- STATUS ----
+    if (statusFilter.length && !statusFilter.includes(apt.status as AppointmentStatus)) return false;
+
+    return true;
+  });
+}, [effectiveDate, doctorCode, searchParams, appointments, tagFilter, statusFilter, DAY_VIEW_ALLOWED_STATUSES]);
+
+
+console.log(filteredAppointments)
 
   const getWeekOfMonth = (date: Date) => {
     const startWeek = startOfWeek(startOfMonth(date));
@@ -201,23 +189,27 @@ export default function TodayPatientsPage() {
   };
 
   const pageTitle = useMemo(() => {
-    if (!effectiveDate) return "";
+  if (!effectiveDate) return "";
 
-    if (monthFilter) {
-      return `Patients for ${format(effectiveDate, "MMMM yyyy")}`;
-    }
+  const monthFilter = searchParams.get("month") === "1";
+  const weekFilter = searchParams.get("week") === "1";
 
-    if (weekFilter) {
-      const week = getWeekOfMonth(effectiveDate);
-      return `Patients for week ${week} of ${format(effectiveDate, "MMMM yyyy")}`;
-    }
+  const getWeekOfMonth = (date: Date) => {
+    const startWeek = startOfWeek(startOfMonth(date));
+    const currentWeek = startOfWeek(date);
+    return Math.floor(
+      (currentWeek.getTime() - startWeek.getTime()) / (7 * 24 * 60 * 60 * 1000)
+    ) + 1;
+  };
 
-    return `Patients for ${format(effectiveDate, "EEEE, MMM d yyyy")}`;
-  }, [monthFilter, weekFilter, effectiveDate]);
-
-  if (!effectiveDate) {
-    return null;
+  if (monthFilter) return `Patients for ${format(effectiveDate, "MMMM yyyy")}`;
+  if (weekFilter) {
+    const week = getWeekOfMonth(effectiveDate);
+    return `Patients for week ${week} of ${format(effectiveDate, "MMMM yyyy")}`;
   }
+
+  return `Patients for ${format(effectiveDate, "EEEE, MMM d yyyy")}`;
+}, [effectiveDate, searchParams]);
 
   /* ---------------- UI ---------------- */
   return (

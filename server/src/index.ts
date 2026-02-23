@@ -7,7 +7,8 @@ import { UserAuthRouter } from "./routes/UserAuthRouter.js";
 import { dbConnect } from "../lib/dbConnect.js";
 import mongoose from "mongoose";
 import { DoctorRouter } from "./routes/DoctorRouter.js";
-import { getDoctorPatients } from "./controllers/DoctorController.js";
+import { AppointmentRouter } from "./routes/AppointmentRouter.js";
+import { PatientRouter } from "./routes/PatientRouter.js";
 
 config();
 
@@ -17,10 +18,15 @@ app.use(cookieParser());
 app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
 
 
+app.use((req, res, next) => {
+  console.log("Incoming request:", req.method, req.url);
+  next();
+});
 
 app.use("/user", UserAuthRouter);
 app.use("/doctor", DoctorRouter);
-
+app.use("/appointments", AppointmentRouter);
+app.use("/patients", PatientRouter);
 
 
 

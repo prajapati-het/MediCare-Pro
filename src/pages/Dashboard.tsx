@@ -44,6 +44,7 @@ import { useAppSelector } from '@/redux/hooks';
 import { useGetDoctorPatientsQuery, useGetUserDetailsQuery } from '@/redux/slices/api';
 import { PageLoader } from '@/components/PageLoader';
 import { setDoctorCode } from '@/redux/slices/appSlice';
+import { setDoctorInfo, setDoctorPatients } from '@/redux/slices/doctorSlice';
 
 const weeklyData = [
   { name: 'Mon', patients: 120, appointments: 85, admissions: 24 },
@@ -82,6 +83,8 @@ export default function Dashboard() {
   const { doctorUser, adminUser, isLoggedIn } = useSelector((state: RootState) => state.app);
   const dispatch = useDispatch();
 
+  dispatch(setDoctorInfo(doctorUser))
+
   const doctorId = doctorUser?.id;
   const todayStr = new Date().toISOString().split("T")[0];
 
@@ -104,13 +107,15 @@ export default function Dashboard() {
       localStorage.removeItem("patients");
       localStorage.removeItem("TotalPatients");
 
+      dispatch(setDoctorPatients(apiData?.patients))
+
       // Store fresh data
       localStorage.setItem("patients", JSON.stringify(apiData.patients));
       localStorage.setItem("TotalPatients", JSON.stringify(apiData.totalPatients));
 
       console.log("[localStorage] Updated patients:", apiData.patients);
     }
-  }, [apiData]);
+  }, [apiData, dispatch]);
 
   const patients = apiData?.patients ;
   const totalPatients = apiData?.totalPatients ;
