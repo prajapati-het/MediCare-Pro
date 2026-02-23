@@ -12,6 +12,7 @@ export type AuthUserPayload = {
 interface AppState {
   doctorUser: DoctorType | null;
   adminUser: AdminType | null;
+  doctorCode: string | null; // ✅ ADD THIS
   loginMethod: "email" | "google" | null;
   isLoggedIn: boolean;
 }
@@ -21,6 +22,7 @@ interface AppState {
 const initialState: AppState = {
   doctorUser: null,
   adminUser: null,
+  doctorCode: null, // ✅ ADD THIS
   loginMethod: null,
   isLoggedIn: false,
 };
@@ -38,6 +40,7 @@ const appSlice = createSlice({
         state.doctorUser = user;
       } else if (user.role === "admin") {
         state.adminUser = user;
+        state.doctorCode = null;
       }
 
       state.isLoggedIn = true;
@@ -50,17 +53,24 @@ const appSlice = createSlice({
       state.loginMethod = action.payload;
     },
 
-    logout: state => {
+    logout: (state) => {
       state.doctorUser = null;
       state.adminUser = null;
       state.isLoggedIn = false;
       state.loginMethod = null;
     },
 
-    updateDoctorStatus: (state, action: PayloadAction<"active" | "on-leave" | "busy">) => {
+    updateDoctorStatus: (
+      state,
+      action: PayloadAction<"active" | "on-leave" | "busy">
+    ) => {
       if (state.doctorUser) {
         state.doctorUser.status = action.payload;
       }
+    },
+
+    setDoctorCode: (state, action: PayloadAction<string>) => {
+      state.doctorCode = action.payload;
     },
   },
 });
@@ -72,6 +82,7 @@ export const {
   updateLoginMethod,
   logout,
   updateDoctorStatus,
+  setDoctorCode
 } = appSlice.actions;
 
 export default appSlice.reducer;

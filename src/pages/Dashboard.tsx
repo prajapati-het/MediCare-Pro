@@ -38,11 +38,12 @@ import {
 } from 'recharts';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { getPatientsByDoctorId } from '@/data/patientsData';
-import { useMemo } from 'react';
-import { selectAppointmentsWithPatientInfoByDoctor, selectPatientsByDoctor, selectTodayAppointmentsByDoctor } from '@/selectors/selectors';
-import { Patient } from '@/types/type';
+import { useEffect, useMemo } from 'react';
+import { selectPatientsByDoctor, selectTodayAppointmentsByDoctor } from '@/selectors/selectors';
 import { useAppSelector } from '@/redux/hooks';
+import { useGetDoctorPatientsQuery, useGetUserDetailsQuery } from '@/redux/slices/api';
+import { PageLoader } from '@/components/PageLoader';
+import { setDoctorCode } from '@/redux/slices/appSlice';
 
 const weeklyData = [
   { name: 'Mon', patients: 120, appointments: 85, admissions: 24 },
@@ -78,25 +79,55 @@ const upcomingAppointments = [
 ];
 
 export default function Dashboard() {
-    const { doctorUser, isLoggedIn, adminUser } = useSelector((state: RootState) => state.app);
-  const doctorId = doctorUser?.id;
-  const todayStr = new Date().toISOString().split('T')[0];
+  const { doctorUser, adminUser, isLoggedIn } = useSelector((state: RootState) => state.app);
+  const dispatch = useDispatch();
 
-  // ✅ Redux selectors
-  const patients = useAppSelector(state =>
-    doctorId ? selectPatientsByDoctor(state, doctorId) : []
-  );
+  const doctorId = doctorUser?.id;
+  const todayStr = new Date().toISOString().split("T")[0];
 
   const todayAppointments = useAppSelector(state =>
     doctorId ? selectTodayAppointmentsByDoctor(state, doctorId, todayStr) : []
   );
 
-  // ✅ Stats cards
+  const { data: apiData, isLoading } = useGetDoctorPatientsQuery(String(doctorId ?? null), {
+    skip: doctorId == null
+  });
+
+  // const fallbackPatients = useAppSelector(state =>
+  //   doctorId != null ? selectPatientsByDoctor(state, Number(doctorId)) : []
+  // );
+
+  useEffect(() => {
+    if (apiData?.patients) {
+      console.log(apiData?.patients.length)
+      // Remove old data first
+      localStorage.removeItem("patients");
+      localStorage.removeItem("TotalPatients");
+
+      // Store fresh data
+      localStorage.setItem("patients", JSON.stringify(apiData.patients));
+      localStorage.setItem("TotalPatients", JSON.stringify(apiData.totalPatients));
+
+      console.log("[localStorage] Updated patients:", apiData.patients);
+    }
+  }, [apiData]);
+
+  const patients = apiData?.patients ;
+  const totalPatients = apiData?.totalPatients ;
+  
+
+  useEffect(() => {
+    if (apiData?.doctorCode != null) {
+      dispatch(setDoctorCode(apiData.doctorCode));
+    }
+  }, [apiData?.doctorCode, dispatch]);
+
+  // Stats cards
   const statsCards = useMemo(() => [
     { 
       icon: Users, 
       label: 'Total Patients', 
-      value: patients.length.toLocaleString(), 
+      value: totalPatients, 
       change: '+12.5%',   // static for now
       trend: 'up',
       color: 'bg-primary/10',
@@ -129,11 +160,15 @@ export default function Dashboard() {
       color: 'bg-success/10',
       iconColor: 'text-success'
     },
-  ], [patients.length, todayAppointments.length]);
+  ], [todayAppointments.length, totalPatients]);
 
   // ✅ Motion variants
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
+
+  if (isLoading) return <PageLoader />;
+
+
   return (
     <div className="min-h-screen bg-background">
       <Header />

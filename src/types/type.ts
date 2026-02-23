@@ -39,11 +39,15 @@ export interface StaffType {
     hospital: string;
 }
 
-interface googleSignInResponseType {
+export interface googleSignInResponseType {
   token: string;
   user: DoctorType | AdminType;
 }
 
+export type LoginResponse = {
+  token?: string;
+  user: DoctorType | AdminType;
+};
 
 export interface loginCredentialsType {
   email: string;
@@ -91,6 +95,7 @@ export interface Facility {
 
 
 export interface Patient {
+  doctorCode: string;
   id: number;
   doctorId: number;
   name: string;

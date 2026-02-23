@@ -7,6 +7,8 @@ import {
   Appointment,
   Patient,
   Hospital,
+  googleSignInResponseType,
+  LoginResponse,
 } from "@/types/type";
 
 export const api = createApi({
@@ -27,7 +29,7 @@ export const api = createApi({
 
     /* ===================== AUTH ===================== */
 
-    login: builder.mutation<DoctorType | AdminType, loginCredentialsType>({
+    login: builder.mutation<LoginResponse, loginCredentialsType>({
       query: (body) => ({
         url: "/user/login",
         method: "POST",
@@ -36,7 +38,7 @@ export const api = createApi({
       invalidatesTags: ["User"],
     }),
 
-    signup: builder.mutation<DoctorType | AdminType, signupCredentialsType>({
+    signup: builder.mutation<LoginResponse, signupCredentialsType>({
       query: (body) => ({
         url: "/user/signup",
         method: "POST",
@@ -50,6 +52,14 @@ export const api = createApi({
         method: "POST",
       }),
       invalidatesTags: ["User"],
+    }),
+
+    googleSignIn: builder.mutation<googleSignInResponseType, { idToken: string }>({
+      query: (body) => ({
+        url: "/user/googleSignin",
+        method: "POST",
+        body,
+      }),
     }),
 
     getUserDetails: builder.query<DoctorType | AdminType, void>({
@@ -71,9 +81,17 @@ export const api = createApi({
       providesTags: ["Appointment"],
     }),
 
-    getDoctorPatients: builder.query<Patient[], string>({
-      query: (doctorId) => `/patients/doctor/${doctorId}`,
-      providesTags: ["Patient"],
+    getDoctorPatients: builder.query<
+      { doctorCode: string; patients: Patient[]; totalPatients: number },
+      string
+    >({
+      query: (doctorId) => `/doctor/${doctorId}/patients`,
+      providesTags: ["Doctor"],
+    }),
+
+    getDoctorDetails: builder.query<DoctorType, string>({
+      query: (doctorId) => `/doctor/${doctorId}/details`,
+      providesTags: ["Doctor"],
     }),
 
     /* ===================== APPOINTMENTS ===================== */
@@ -122,6 +140,7 @@ export const {
 
   useGetDoctorAppointmentsQuery,
   useGetDoctorPatientsQuery,
+  useGetDoctorDetailsQuery,
 
   useGetAppointmentsQuery,
   useGetAppointmentByIdQuery,
@@ -129,4 +148,7 @@ export const {
 
   useGetPatientsQuery,
   useGetPatientByIdQuery,
+
+  useGoogleSignInMutation,
+
 } = api;

@@ -18,13 +18,24 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, isLoggedIn } = useSelector((state: RootState) => state.app);
+  const { doctorUser, adminUser, isLoggedIn } = useSelector(
+    (state: RootState) => state.app
+  );
   const location = useLocation();
 
+  // ⏳ wait for redux-persist hydration
+  if (doctorUser === undefined || adminUser === undefined) {
+    return <PageLoader />;
+  }
+
+  const user = doctorUser ?? adminUser;
+
+  // 🔐 not logged in
   if (!isLoggedIn || !user) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  // 🚫 role-based protection
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
@@ -33,5 +44,19 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 }
 
 export function PublicRoute({ children }: { children: ReactNode }) {
+  const { doctorUser, adminUser, isLoggedIn } = useSelector(
+    (state: RootState) => state.app
+  );
+
+  // ⏳ wait for redux-persist hydration
+  if (doctorUser === undefined || adminUser === undefined) {
+    return <PageLoader />;
+  }
+
+  // ✅ already logged in → dashboard
+  if (isLoggedIn && (doctorUser || adminUser)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
 }

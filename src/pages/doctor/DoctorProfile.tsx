@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAppSelector } from '@/redux/hooks';
 import { selectPatientsByDoctor } from '@/selectors/selectors';
+import { useGetDoctorDetailsQuery, useGetDoctorPatientsQuery } from '@/redux/slices/api';
 
 type DoctorStatus = "active" | "on-leave" | "busy";
 
@@ -33,13 +34,21 @@ export default function DoctorProfile() {
   const dispatch = useDispatch();
   const { toast } = useToast();
 
-  const currentUser = useSelector(
+  let currentUser = useSelector(
     (state: RootState) => state.app.doctorUser
   );
 
-  const patients = useAppSelector(state =>
-    currentUser?.id ? selectPatientsByDoctor(state, currentUser.id) : []
-  );
+  const { data: doctor, isLoading, isError } = useGetDoctorDetailsQuery(String(currentUser.id));
+  const { data: apiData } = useGetDoctorPatientsQuery(String(currentUser.id?? null), {
+      skip: currentUser.id == null
+    });
+
+  currentUser = doctor;
+
+  console.log(apiData)
+
+  const Totalpatients = localStorage.getItem("TotalPatients");
+
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -440,7 +449,7 @@ const convertTo24Hour = (time?: string | null) => {
                       transition={{ type: "spring", stiffness: 300 }}
                     >
                       <p className="text-4xl font-bold text-primary mb-2">
-                        {patients.length}
+                        {Totalpatients}
                       </p>
                       <p className="text-sm text-muted-foreground">Total Patients</p>
                     </motion.div>

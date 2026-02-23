@@ -58,10 +58,27 @@ export function Header() {
     navigate(isLoggedIn ? "/dashboard" : "/auth");
   };
 
-  const handleLogout = () => {
+ const handleLogout = async () => {
+  try {
+    // 1️⃣ call backend to clear httpOnly cookie
+    await fetch("http://localhost:4000/user/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    // 2️⃣ clear redux + persist
     dispatch(logoutAction());
-    navigate("/");
-  };
+
+    // 3️⃣ redirect
+    navigate("/", { replace: true });
+  } catch (err) {
+    console.error("Logout failed", err);
+
+    // fallback: still clear local state
+    dispatch(logoutAction());
+    navigate("/", { replace: true });
+  }
+};
 
   return (
     <motion.header
