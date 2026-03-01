@@ -30,24 +30,49 @@ import { useToast } from '@/hooks/use-toast';
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import { logout as logoutAction } from "@/redux/slices/appSlice";
+import { useGetAdminDetailsQuery, useGetDoctorsByHospitalQuery, useGetHospitalByIdQuery } from '@/redux/slices/api';
 
 export default function AdminDoctors() {
   const dispatch = useDispatch();
-  const { user, isLoggedIn } = useSelector(
+  const { adminUser, isLoggedIn } = useSelector(
     (state: RootState) => state.app
   );
-  const { doctors, deleteDoctor } = useDoctors();
+
+  const { data: admin, isLoading, isError } = useGetAdminDetailsQuery(String(adminUser.id));
+
+  console.log(admin)
+  const hospitalId = admin?.hospital;
+  const { data: hospital } =
+  useGetHospitalByIdQuery(hospitalId!, {
+    skip: !hospitalId,
+  });
+
+  const hospitalName = hospital?.name
+
+  
+  const { data: doctors = [] } = useGetDoctorsByHospitalQuery(hospitalName!, {
+    skip: !hospitalName
+  });
+
+
+  // const doctors = data || [];
+
+
+ 
+
+
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const filteredDoctors = doctors.filter(doctor =>
-    doctor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doctor.specialty.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredDoctors = doctors.filter((doctor) =>
+    doctor.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doctor.speciality.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  console.log(filteredDoctors)
+
   const handleDelete = (id: number, name: string) => {
-    deleteDoctor(id);
     toast({
       title: "Doctor Removed",
       description: `${name} has been removed from the system.`,
@@ -86,7 +111,7 @@ export default function AdminDoctors() {
                   Doctors Management
                 </h1>
                 <p className="text-muted-foreground">
-                  Manage doctors for {user?.hospital}
+                  Manage doctors for {adminUser?.hospital}
 
                 </p>
               </div>
@@ -125,11 +150,11 @@ export default function AdminDoctors() {
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground font-semibold">
-                            {doctor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            {doctor.username.split(' ').map(n => n[0]).join('').slice(0, 2)}
                           </div>
                           <div>
-                            <h3 className="font-semibold text-foreground">{doctor.name}</h3>
-                            <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
+                            <h3 className="font-semibold text-foreground">{doctor.username}</h3>
+                            <p className="text-sm text-muted-foreground">{doctor.speciality}</p>
                           </div>
                         </div>
                         <DropdownMenu>
@@ -148,7 +173,7 @@ export default function AdminDoctors() {
                               Edit
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                              onClick={() => handleDelete(doctor.id, doctor.name)}
+                              onClick={() => handleDelete(doctor.id, doctor.username)}
                               className="text-destructive"
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
@@ -161,7 +186,7 @@ export default function AdminDoctors() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Stethoscope className="w-4 h-4" />
-                          <span>{doctor.specialty}</span>
+                          <span>{doctor.speciality}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Mail className="w-4 h-4" />

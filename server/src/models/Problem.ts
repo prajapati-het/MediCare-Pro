@@ -8,9 +8,9 @@ export interface IProblem {
   priority: "Critical" | "High" | "Medium" | "Low";
   status: "Open" | "In Progress" | "Resolved" | "Closed";
   reportedBy: string;
-  reportedAt: string;
+  reportedAt: Date;
   assignedTo: string;
-  resolvedAt: string | null;
+  resolvedAt: Date | null;
   description: string;
   resolution: string | null;
   category:
@@ -29,56 +29,66 @@ const ProblemSchema = new Schema<IProblem>(
       required: true,
       unique: true,
     },
+
     hospitalId: {
       type: String,
       required: true,
-      trim: true,
+      index: true,
     },
+
     title: {
       type: String,
       required: true,
       trim: true,
     },
+
     department: {
       type: String,
       required: true,
-      trim: true,
     },
+
     priority: {
       type: String,
       enum: ["Critical", "High", "Medium", "Low"],
-      default: "Medium",
+      required: true,
     },
+
     status: {
       type: String,
       enum: ["Open", "In Progress", "Resolved", "Closed"],
       default: "Open",
     },
+
     reportedBy: {
       type: String,
       required: true,
-      trim: true,
     },
+
     reportedAt: {
+      type: Date,
+      default: Date.now,
+    },
+
+    assignedTo: {
       type: String,
       required: true,
     },
-    assignedTo: {
-      type: String,
-      trim: true,
-    },
+
     resolvedAt: {
-      type: String,
+      type: Date,
       default: null,
     },
+
     description: {
       type: String,
       required: true,
     },
+
     resolution: {
       type: String,
       default: null,
     },
+
     category: {
       type: String,
       enum: [

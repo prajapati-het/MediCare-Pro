@@ -8,7 +8,7 @@ const ProblemSchema = new Schema({
     hospitalId: {
         type: String,
         required: true,
-        trim: true,
+        index: true,
     },
     title: {
         type: String,
@@ -18,12 +18,11 @@ const ProblemSchema = new Schema({
     department: {
         type: String,
         required: true,
-        trim: true,
     },
     priority: {
         type: String,
         enum: ["Critical", "High", "Medium", "Low"],
-        default: "Medium",
+        required: true,
     },
     status: {
         type: String,
@@ -33,18 +32,17 @@ const ProblemSchema = new Schema({
     reportedBy: {
         type: String,
         required: true,
-        trim: true,
     },
     reportedAt: {
-        type: String,
-        required: true,
+        type: Date,
+        default: Date.now,
     },
     assignedTo: {
         type: String,
-        trim: true,
+        required: true,
     },
     resolvedAt: {
-        type: String,
+        type: Date,
         default: null,
     },
     description: {

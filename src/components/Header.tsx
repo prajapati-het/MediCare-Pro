@@ -34,7 +34,7 @@ export function Header() {
   const location = useLocation();
   const { scrollY } = useScroll();
 
-  const { doctorUser, isLoggedIn } = useSelector(
+  const { doctorUser, isLoggedIn, adminUser } = useSelector(
     (state: RootState) => state.app
   );
 
@@ -79,6 +79,7 @@ export function Header() {
     navigate("/", { replace: true });
   }
 };
+
 
   return (
     <motion.header
@@ -245,7 +246,7 @@ export function Header() {
               Contact
             </NavLink>
 
-            {isLoggedIn && doctorUser ? (
+            {isLoggedIn && (doctorUser ?? adminUser ) ? (
               <>
                 {/* Notification Bell */}
                 <motion.div
@@ -322,12 +323,14 @@ export function Header() {
                               }}
                             />
                             <span className="relative z-10">
-                              {doctorUser.username.charAt(0)}
+                              {doctorUser?.username?.charAt(0) 
+                                || adminUser?.username?.charAt(0) 
+                                || "A"}
                             </span>
                           </motion.div>
 
                           <span className="hidden lg:block text-sm font-medium">
-                            {doctorUser.username}
+                            {doctorUser?.username || adminUser?.username}
                           </span>
                           
                           <motion.div
@@ -346,13 +349,13 @@ export function Header() {
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                         >
-                          <p className="font-medium">{doctorUser.username}</p>
-                          <p className="text-xs text-muted-foreground">{doctorUser.email}</p>
+                          <p className="font-medium">{doctorUser?.username || adminUser?.username}</p>
+                          <p className="text-xs text-muted-foreground">{doctorUser?.email || adminUser?.email}</p>
                           <motion.span
                             className="inline-flex mt-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs capitalize"
                             whileHover={{ scale: 1.05 }}
                           >
-                            {doctorUser.role}
+                            {doctorUser?.role || adminUser?.email}
                           </motion.span>
                         </motion.div>
                       </DropdownMenuLabel>

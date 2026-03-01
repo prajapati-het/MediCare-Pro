@@ -59,11 +59,11 @@ const FacilitySchema = new Schema({
         default: "",
     },
     lastMaintenance: {
-        type: String,
+        type: Date,
         required: true,
     },
     nextMaintenance: {
-        type: String,
+        type: Date,
         required: true,
     },
 }, { timestamps: true });

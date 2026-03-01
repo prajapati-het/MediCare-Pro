@@ -95,6 +95,11 @@ export const api = createApi({
       providesTags: ["Doctor"],
     }),
 
+    getDoctorsByHospital: builder.query<DoctorType[], string>({
+      query: (hospitalId) => `/doctor/hospitals/${hospitalId}`,
+      providesTags: ["Doctor"],
+    }),
+
     /* ===================== APPOINTMENTS ===================== */
 
     getAppointments: builder.query<Appointment[], void>({
@@ -151,6 +156,17 @@ export const api = createApi({
     getPatientById: builder.query<Patient, string>({
       query: (id) => `/patients/${id}`,
     }),
+
+
+
+    /* =================== ADMIN ==========================*/
+
+    getAdminDetails: builder.query<AdminType, string>({
+      query: (adminId) => `/admin/${adminId}/details`,
+      providesTags: ["Admin"],
+    }),
+
+
   }),
 });
 
@@ -158,6 +174,7 @@ export const {
   useLoginMutation,
   useSignupMutation,
   useLogoutMutation,
+  useGoogleSignInMutation,
   useGetUserDetailsQuery,
 
   useGetHospitalByIdQuery,
@@ -165,6 +182,7 @@ export const {
   useGetDoctorAppointmentsQuery,
   useGetDoctorPatientsQuery,
   useGetDoctorDetailsQuery,
+  useGetDoctorsByHospitalQuery,
 
   useGetAppointmentsQuery,
   useGetAppointmentByIdQuery,
@@ -176,6 +194,8 @@ export const {
   useGetPatientsQuery,
   useGetPatientByIdQuery,
 
-  useGoogleSignInMutation,
+
+  useGetAdminDetailsQuery
+ 
 
 } = api;

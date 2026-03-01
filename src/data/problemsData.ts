@@ -6,9 +6,9 @@ export interface Problem {
   priority: 'Critical' | 'High' | 'Medium' | 'Low';
   status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
   reportedBy: string;
-  reportedAt: string;
+  reportedAt: Date;
   assignedTo: string;
-  resolvedAt: string | null;
+  resolvedAt: Date | null;
   description: string;
   resolution: string | null;
   category: 'Equipment' | 'Staffing' | 'Supply' | 'Infrastructure' | 'Patient Care' | 'Other';

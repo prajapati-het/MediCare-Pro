@@ -1,55 +1,110 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, model } from "mongoose";
 
 export interface IStaff {
-  userId: Types.ObjectId;
-  staffCode?: number;             // numeric ID (1,2,3...)
-  hospitalId: string;
+  id: number;
   name: string;
-  role: "Nurse" | "Receptionist" | "Technician" | "Support";
+  firstName: string;
+  lastName: string;
+  role: string;
   department: string;
+  email: string;
   phone: string;
-  shift: "Morning" | "Evening" | "Night";
-  status: "Active" | "Inactive";
+  hospital: string;
+  shift: string;
+  status: "on-duty" | "off-duty" | "on-leave";
+  joinDate: Date;
+  employeeId: string;
+  salary: number;
+  emergencyContact: string;
 }
 
 const StaffSchema = new Schema<IStaff>(
   {
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      unique: true,
-    },
-    staffCode: {
+    id: {
       type: Number,
       required: true,
       unique: true,
     },
-    hospitalId: {
+
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    firstName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    lastName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    role: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    department: {
+      type: String,
+      required: true,
+    },
+
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    phone: {
+      type: String,
+      required: true,
+    },
+
+    hospital: {
       type: String,
       required: true,
       index: true,
     },
-    name: {
-      type: String,
-      required: true,
-    },
-    role: {
-      type: String,
-      enum: ["Nurse", "Receptionist", "Technician", "Support"],
-      required: true,
-    },
-    department: String,
-    phone: String,
+
     shift: {
       type: String,
-      enum: ["Morning", "Evening", "Night"],
-      default: "Morning",
+      required: true,
     },
+
     status: {
       type: String,
-      enum: ["Active", "Inactive"],
-      default: "Active",
+      enum: ["on-duty", "off-duty", "on-leave"],
+      default: "on-duty",
+    },
+
+    joinDate: {
+      type: Date, // better than string
+      required: true,
+    },
+
+    employeeId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
+    salary: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    emergencyContact: {
+      type: String,
+      required: true,
     },
   },
   { timestamps: true }

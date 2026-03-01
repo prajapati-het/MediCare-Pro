@@ -13,8 +13,8 @@ export interface IFacility {
   headOfDepartment: string;
   contact: string;
   description: string;
-  lastMaintenance: string;
-  nextMaintenance: string;
+  lastMaintenance: Date;
+  nextMaintenance: Date;
 }
 
 const FacilitySchema = new Schema<IFacility>(
@@ -78,11 +78,11 @@ const FacilitySchema = new Schema<IFacility>(
       default: "",
     },
     lastMaintenance: {
-      type: String,
+      type: Date,
       required: true,
     },
     nextMaintenance: {
-      type: String,
+      type: Date,
       required: true,
     },
   },

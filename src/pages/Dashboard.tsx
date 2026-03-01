@@ -83,7 +83,8 @@ export default function Dashboard() {
   const { doctorUser, adminUser, isLoggedIn } = useSelector((state: RootState) => state.app);
   const dispatch = useDispatch();
 
-  dispatch(setDoctorInfo(doctorUser))
+  if(doctorUser)
+    dispatch(setDoctorInfo(doctorUser))
 
   const doctorId = doctorUser?.id;
   const todayStr = new Date().toISOString().split("T")[0];

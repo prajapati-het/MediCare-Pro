@@ -274,7 +274,10 @@ const handleSubmit = async (e: React.FormEvent) => {
     dispatch(appendUser({ user }));
     dispatch(updateLoginMethod("email"));
 
+    console.log(user.role)
+
     if (user.role === "admin") {
+    
       navigate(`/hospitals/${user.hospital}`);
     } else {
       navigate("/dashboard");
@@ -424,7 +427,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-4 bg-white text-gray-500">
-                Or continue with email
+                OR
               </span>
             </div>
           </motion.div>
