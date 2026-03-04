@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Appointment, IAppointment } from "../models/Appointment.js";
 import { Patient } from "../models/Patient.js";
+import { Doctor } from "../models/Doctor.js";
 
 // -------------------- Get appointments for a specific day --------------------
 export const getTodayAppointments = async (req: Request, res: Response) => {
@@ -129,6 +130,105 @@ export const getAppointmentsWithPatientInfo = async (req: Request, res: Response
     res.json(result);
   } catch (err) {
     console.error("Error fetching appointments with patients:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+export const addAppointment = async (req: Request, res: Response) => {
+  try {
+    const { doctorCode, patientName, date, time } = req.body;
+
+    if (!doctorCode || !patientName || !date || !time) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    // Generate unique patientId and id
+    const lastPatient = await Appointment.findOne({}).sort({ patientId: -1 }).exec();
+    const patientId = lastPatient ? lastPatient.patientId + 1 : 1;
+
+    const lastId = await Appointment.findOne({}).sort({ id: -1 }).exec();
+    const id = lastId ? lastId.id + 1 : 1;
+
+    const newAppointment = await Appointment.create({
+      doctorCode,
+      patientName,
+      date,
+      time,
+      patientId,
+      id,
+    });
+
+    return res.status(201).json({ success: true, data: newAppointment });
+  } catch (error) {
+    console.error("addAppointment error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+
+// Update appointment status and log it to Patient table
+export const updateAppointmentStatus = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // 1. Update appointment
+    const appointment = await Appointment.findOneAndUpdate(
+      { id: Number(id) },
+      { status },
+      { returnDocument: "after" }
+    );
+
+    if (!appointment) return res.status(404).json({ message: "Appointment not found" });
+
+    const doctor = await Doctor.findOne({
+      doctorCode: appointment.doctorCode
+    });
+
+    if (!doctor) {
+      throw new Error("Doctor not found");
+    }
+
+    // 2. Add entry to Patient table
+    const patientEntry = await Patient.findOneAndUpdate(
+      { id: appointment.patientId },
+      {
+        status: "Active",
+        doctorCode: appointment.doctorCode,
+        name: appointment.patientName,
+        lastVisit: appointment.date,
+        doctorId: doctor.id
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(200).json({ appointment, patientEntry });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+export const updateAppointment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const updated = await Appointment.findByIdAndUpdate(
+      id,
+      { $set: req.body },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    res.json(updated);
+  } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
 };

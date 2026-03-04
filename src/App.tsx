@@ -26,10 +26,15 @@ const DoctorDetail = lazy(() => import("./pages/DoctorDetail"));
 const Staff = lazy(() => import("./pages/Staff"));
 const AddStaff = lazy(() => import("./pages/AddStaff"));
 const StaffDetail = lazy(() => import("./pages/StaffDetail"));
+const AddFacility = lazy(()=> import("./pages/AddFacility"));
+const AddProblem = lazy(()=> import("./pages/AddProblem"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
+const BookAppointment = lazy(() => import("./pages/BookAppointment"));
+
+
 
 const AdminDoctors = lazy(() => import("./pages/admin/AdminDoctors"));
 const AdminStaff = lazy(() => import("./pages/admin/AdminStaff"));
@@ -107,6 +112,7 @@ const App = () => (
                       />
                       <Route path="/about" element={<About />} />
                       <Route path="/contact" element={<Contact />} />
+                      <Route path="/bookappointment" element={<BookAppointment/>} />
                       <Route
                         path="/unauthorized"
                         element={
@@ -369,6 +375,32 @@ const App = () => (
                         path="/doctor/:docid/patients/:id/bill"
                         element={<PatientBill />}
                       />
+
+
+                      {/* Facility */}
+
+                      <Route
+                        path="/facilities/add"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin"]}>
+                            <AddFacility />
+                          </ProtectedRoute>
+                        }
+                      />
+
+
+                      {/* Problems */}
+                        <Route
+                        path="/problems/add"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin"]}>
+                            <AddProblem />
+                          </ProtectedRoute>
+                        }
+                      />
+
+
+
 
                       <Route path="*" element={<NotFound />} />
                     </Routes>

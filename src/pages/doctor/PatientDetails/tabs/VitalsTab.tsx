@@ -12,6 +12,7 @@ import {
   Droplet,
   Gauge,
 } from "lucide-react";
+import { useGetPatientByIdQuery } from "@/redux/slices/api";
 
 const vitalsMeta: Record<
   string,
@@ -30,10 +31,7 @@ const vitalsMeta: Record<
 export default function VitalsTab() {
   const { id } = useParams();
 
-  const patient = useSelector((state: RootState) =>
-    state.patients.list.find((p) => p.id === Number(id))
-  );
-
+  const { data: patient, isLoading, isError } = useGetPatientByIdQuery(id);
   if (!patient) return null;
 
   return (

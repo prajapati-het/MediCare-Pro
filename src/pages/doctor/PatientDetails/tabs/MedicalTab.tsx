@@ -8,13 +8,12 @@ import {
   Droplet,
   ClipboardList,
 } from "lucide-react";
+import { useGetPatientByIdQuery } from "@/redux/slices/api";
 
 export default function MedicalTab() {
   const { id } = useParams();
 
-  const patient = useSelector((state: RootState) =>
-    state.patients.list.find((p) => p.id === Number(id))
-  );
+  const { data: patient, isLoading, isError } = useGetPatientByIdQuery(id);
 
   if (!patient) return null;
 

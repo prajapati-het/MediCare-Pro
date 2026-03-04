@@ -27,11 +27,10 @@ import {
 } from "date-fns";
 
 import { Appointment, AppointmentStatus } from "@/data/appointmentsData";
-import { updateAppointment } from "@/redux/slices/appointmentsSlice";
-import { selectAppointmentsWithPatientInfoByDoctor } from "@/selectors/selectors";
 import { RootState } from "@/redux/store";
-import { useGetAppointmentsWithPatientInfoQuery } from "@/redux/slices/api";
+import { useGetAppointmentsWithPatientInfoQuery, useUpdateAppointmentStatusMutation } from "@/redux/slices/api";
 import { AppointmentWithPatientInfo } from "@/types/type";
+import { toast } from "./ui/use-toast";
 
 export default function TodayPatientsPage() {
   const dispatch = useDispatch();
@@ -210,6 +209,10 @@ console.log(filteredAppointments)
 
   return `Patients for ${format(effectiveDate, "EEEE, MMM d yyyy")}`;
 }, [effectiveDate, searchParams]);
+
+
+const [updateStatus] = useUpdateAppointmentStatusMutation();
+
 
   /* ---------------- UI ---------------- */
   return (
@@ -663,14 +666,15 @@ console.log(filteredAppointments)
                     <Button
                       size="sm"
                       className={`${actionColors.complete} justify-start transition-all duration-200 hover:scale-105 shadow-sm`}
-                      onClick={() => {
-                        dispatch(
-                          updateAppointment({
-                            id: apt.id,
-                            changes: { status: "Completed" },
-                          })
-                        );
-                        setActionPopupId(null);
+                      onClick={async () => {
+                        try {
+                          await updateStatus({ id: String(apt.id), status: "Completed" }).unwrap();
+                          toast({ title: "Appointment marked completed" });
+                          setActionPopupId(null);
+                        } catch (err) {
+                          console.error(err);
+                          toast({ title: "Error updating appointment" });
+                        }
                       }}
                     >
                       <Check className="w-4 h-4 mr-2" />
@@ -680,14 +684,15 @@ console.log(filteredAppointments)
                     <Button
                       size="sm"
                       className={`${actionColors.cancel} justify-start transition-all duration-200 hover:scale-105 shadow-sm`}
-                      onClick={() => {
-                        dispatch(
-                          updateAppointment({
-                            id: apt.id,
-                            changes: { status: "Cancelled" },
-                          })
-                        );
-                        setActionPopupId(null);
+                      onClick={async () => {
+                        try {
+                          await updateStatus({ id: String(apt.id), status: "Cancelled" }).unwrap();
+                          toast({ title: "Appointment cancelled" });
+                          setActionPopupId(null);
+                        } catch (err) {
+                          console.error(err);
+                          toast({ title: "Error updating appointment" });
+                        }
                       }}
                     >
                       <X className="w-4 h-4 mr-2" />

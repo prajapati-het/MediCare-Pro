@@ -5,13 +5,13 @@ import { User, Phone, Mail, Droplet } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
+import { useGetPatientByIdQuery } from "@/redux/slices/api";
 
 export default function PatientHeroCard() {
   const { id } = useParams();
 
-  const patient = useSelector((state: RootState) =>
-    state.patients.list.find((p) => p.id === Number(id))
-  );
+  const { data: patient, isLoading, isError } = useGetPatientByIdQuery(id);
+
 
   console.log(patient);
 

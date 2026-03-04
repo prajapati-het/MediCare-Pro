@@ -30,19 +30,48 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useDoctors } from '@/contexts/DoctorsContext';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { useGetAdminDetailsQuery, useGetDoctorsByHospitalQuery, useGetHospitalByIdQuery } from '@/redux/slices/api';
 
 const specialties = ['All', 'Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics', 'Dermatology', 'Oncology', 'Gastroenterology', 'Pulmonology', 'Endocrinology', 'Psychiatry', 'Ophthalmology', 'ENT', 'Urology', 'Nephrology', 'General Medicine'];
 
 export default function Doctors() {
   const navigate = useNavigate();
-  const { doctors, deleteDoctor } = useDoctors();
+  // const { doctors, deleteDoctor } = useDoctors();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('All');
 
+  const { adminUser, isLoggedIn } = useSelector(
+      (state: RootState) => state.app
+    );
+  
+    const { data: admin, isLoading, isError } = useGetAdminDetailsQuery(String(adminUser.id));
+  
+    console.log(admin)
+    const hospitalId = admin?.hospital;
+    const { data: hospital } =
+    useGetHospitalByIdQuery(hospitalId!, {
+      skip: !hospitalId,
+    });
+  
+    const hospitalName = hospital?.name
+
+    console.log(hospitalName)
+  
+    
+    const { data: doctors = [] } = useGetDoctorsByHospitalQuery(hospitalName!, {
+      skip: !hospitalName
+    });
+
+    console.log(doctors)
+
+    
+
   const filteredDoctors = doctors.filter(d => {
-    const matchesSearch = d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.specialty.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSpecialty = selectedSpecialty === 'All' || d.specialty === selectedSpecialty;
+    const matchesSearch = d.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.speciality.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSpecialty = selectedSpecialty === 'All' || d.speciality === selectedSpecialty;
     return matchesSearch && matchesSpecialty;
   });
 
@@ -68,6 +97,10 @@ export default function Doctors() {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
   };
+
+  function deleteDoctor(id: number): void {
+    throw new Error('Function not implemented.');
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -137,14 +170,14 @@ export default function Doctors() {
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <Avatar className="w-14 h-14 border-2 border-primary/20">
-                            <AvatarImage src={doctor.avatar || undefined} />
+                            <AvatarImage src={doctor.picture || undefined} />
                             <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground font-semibold">
-                              {doctor.name.split(' ').map(n => n[0]).join('')}
+                              {doctor.username.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <h3 className="font-semibold text-foreground">{doctor.name}</h3>
-                            <p className="text-sm text-primary">{doctor.specialty}</p>
+                            <h3 className="font-semibold text-foreground">{doctor.username}</h3>
+                            <p className="text-sm text-primary">{doctor.speciality}</p>
                           </div>
                         </div>
                         
@@ -190,21 +223,20 @@ export default function Doctors() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2 mb-4">
-                        <div className="text-center p-2 rounded-lg bg-muted/50">
-                          <p className="text-sm font-bold text-foreground">{doctor.experience}</p>
-                          <p className="text-xs text-muted-foreground">Experience</p>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="text-center p-3 rounded-xl bg-muted/50">
+                          <p className="text-lg font-bold text-foreground">{doctor.experience}</p>
+                          <p className="text-xs text-muted-foreground mt-1">Years Experience</p>
                         </div>
-                        <div className="text-center p-2 rounded-lg bg-muted/50">
-                          <p className="text-sm font-bold text-foreground">{doctor.patients}</p>
-                          <p className="text-xs text-muted-foreground">Patients</p>
-                        </div>
-                        <div className="text-center p-2 rounded-lg bg-muted/50">
+
+                        <div className="text-center p-3 rounded-xl bg-muted/50">
                           <div className="flex items-center justify-center gap-1">
-                            <Star className="w-3 h-3 text-warning fill-warning" />
-                            <span className="text-sm font-bold text-foreground">{doctor.rating}</span>
+                            <Star className="w-4 h-4 text-warning fill-warning" />
+                            <span className="text-lg font-bold text-foreground">
+                              {doctor.rating}
+                            </span>
                           </div>
-                          <p className="text-xs text-muted-foreground">Rating</p>
+                          <p className="text-xs text-muted-foreground mt-1">Rating</p>
                         </div>
                       </div>
 

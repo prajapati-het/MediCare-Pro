@@ -57,6 +57,8 @@ export default function DoctorAppointments() {
     doctorCode ? { doctorCode, month, year } : skipToken
   );
 
+  console.log(monthlyAppointments)
+
   console.log("Today:", todayAppointments);        // always an array
   console.log("Monthly:", monthlyAppointments);    // always an array
 

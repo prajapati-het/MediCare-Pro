@@ -33,3 +33,24 @@ export const getPatientById = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Server error fetching patient" });
   }
 };
+
+
+export const updatePatient = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const updatedPatient = await Patient.findOneAndUpdate(
+      { id: Number(id) },
+      { $set: req.body },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedPatient) {
+      return res.status(404).json({ success: false, message: "Patient not found" });
+    }
+
+    res.json({ success: true, data: updatedPatient });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Update failed" });
+  }
+};

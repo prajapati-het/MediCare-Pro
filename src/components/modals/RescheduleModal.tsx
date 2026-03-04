@@ -1,30 +1,31 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useDispatch } from "react-redux";
-import { rescheduleAppointment, Appointment } from "@/redux/slices/appointmentsSlice";
+import { useRescheduleAppointmentMutation } from "@/redux/slices/api";
 
 export default function RescheduleAppointmentModal({
   open,
   onClose,
   appointment,
   allAppointments,
-}: {
-  open: boolean;
-  onClose: () => void;
-  appointment: Appointment;
-  allAppointments: Appointment[];
 }) {
-  const dispatch = useDispatch();
+  const [rescheduleAppointment, { isLoading }] =
+    useRescheduleAppointmentMutation();
+
   const [date, setDate] = useState(appointment.date);
   const [time, setTime] = useState(appointment.time);
-  const [error, setError] = useState("");
 
-  const todayStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+  const todayStr = new Date().toISOString().split("T")[0];
 
   const hasConflict = allAppointments.some(
     (a) =>
-      a.id !== appointment.id &&
+      a._id !== appointment._id &&
       a.date === date &&
       a.time === time &&
       a.status !== "Cancelled"
@@ -32,17 +33,20 @@ export default function RescheduleAppointmentModal({
 
   const isPastTime = new Date(`${date} ${time}`) < new Date();
 
-  const handleReschedule = () => {
+  const handleReschedule = async () => {
     if (hasConflict || isPastTime) return;
 
-    dispatch(
-      rescheduleAppointment({
-        id: appointment.id,
+    try {
+      await rescheduleAppointment({
+        id: appointment._id, // ⚠ use Mongo _id
         date,
         time,
-      })
-    );
-    onClose();
+      }).unwrap();
+
+      onClose();
+    } catch (err) {
+      console.error("Reschedule failed:", err);
+    }
   };
 
   return (
@@ -50,19 +54,21 @@ export default function RescheduleAppointmentModal({
       <DialogContent className="space-y-3">
         <DialogHeader>
           <DialogTitle>Reschedule Appointment</DialogTitle>
+          <DialogDescription>
+            Select a new date and time for this appointment.
+          </DialogDescription>
         </DialogHeader>
 
         <input
           type="date"
-          title="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
           min={todayStr}
           className="border p-1 rounded"
         />
+
         <input
           type="time"
-          title="time"
           value={time}
           onChange={(e) => setTime(e.target.value)}
           className="border p-1 rounded"
@@ -76,8 +82,11 @@ export default function RescheduleAppointmentModal({
           </p>
         )}
 
-        <Button disabled={hasConflict || isPastTime} onClick={handleReschedule}>
-          Confirm Reschedule
+        <Button
+          disabled={hasConflict || isPastTime || isLoading}
+          onClick={handleReschedule}
+        >
+          {isLoading ? "Updating..." : "Confirm Reschedule"}
         </Button>
       </DialogContent>
     </Dialog>

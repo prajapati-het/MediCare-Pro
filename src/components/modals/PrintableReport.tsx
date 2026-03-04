@@ -3,7 +3,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { useParams } from "react-router-dom";
 import ReportHeader from "./ReportHeader";
-import { useGetDoctorDetailsQuery } from "@/redux/slices/api";
+import { useGetDoctorDetailsQuery, useGetPatientByIdQuery } from "@/redux/slices/api";
+import "../../PrintableReport.css"
 
 interface Props {
   selectedSections: string[];
@@ -12,46 +13,29 @@ interface Props {
 export default function PrintableReport({ selectedSections }: Props) {
   const { id } = useParams();
 
-  const patient = useSelector((state: RootState) =>
-    state.patients.list.find(p => p.id === Number(id))
-  );
+  const { data: patient, isLoading, isError } = useGetPatientByIdQuery(id);
 
   const currUser = useSelector((state: RootState) => state.app.doctorUser);
 
-  const { data: doctor, isLoading, isError } = useGetDoctorDetailsQuery(String(currUser.id));
+  const { data: doctor, isLoading: isLoadingDoctorDetail, isError: isErrorDoctorDetail } = useGetDoctorDetailsQuery(String(currUser.id));
 
-  console.log(doctor)
+  console.log(patient)
+
+  if (isLoading) return <div className="flex items-center justify-center h-screen text-sm text-muted-foreground">Loading patients…</div>;
+  if (isError)   return <div className="flex items-center justify-center h-screen text-sm text-destructive">Failed to load patients.</div>;
 
   return (
     <div className="relative print-container bg-white rounded-lg border p-8 shadow-sm">
       
       {/* Watermark - sits behind all content */}
       <div
-        aria-hidden="true"
-        style={{
-          WebkitUserSelect: "none",
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%) rotate(-45deg)",
-          fontSize: "4.5rem",
-          fontWeight: 800,
-          color: "rgba(0,0,0,0.06)",
-          whiteSpace: "nowrap",
-          pointerEvents: "none",
-          zIndex: 0,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          userSelect: "none",
-        
-        }}
         className="print-watermark"
       >
         <span>{doctor?.hospital}</span>
       </div>
 
       {/* All report content sits above watermark */}
-      <div style={{ position: "relative", zIndex: 1 }}>
+      <div>
         {/* Hospital Header */}
         <header className="relative border-b-2 border-gray-300 pb-6 mb-8 print:pb-4 print:mb-6">
           <ReportHeader />

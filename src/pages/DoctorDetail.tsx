@@ -21,7 +21,7 @@ import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   BarChart,
   Bar,
@@ -31,6 +31,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { useGetDoctorDetailsQuery, useGetDoctorPatientsQuery } from '@/redux/slices/api';
 
 const doctorData = {
   id: 1,
@@ -73,7 +74,29 @@ const upcomingAppointments = [
 
 export default function DoctorDetail() {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+
+  const { data: apiData, isLoading: dpLoading, isError: dpError } = useGetDoctorPatientsQuery(id!, {
+    skip: !id,
+  });
+
+  const { data: doctor, isLoading, isError } =
+    useGetDoctorDetailsQuery(id!, {
+      skip: !id,
+  });
+
+  console.log("ID:", id);
+  console.log("Doctor:", doctor);
+  console.log("Loading:", isLoading);
+  console.log("Error:", isError);
+  console.log(apiData)
+
+
+  if (isLoading || dpLoading) return <div>Loading...</div>;
+
+  if (isError || dpError) return <div>Error loading doctor</div>;
+
+  if (!doctor || !apiData) return <div>No doctor found</div>;
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,20 +117,21 @@ export default function DoctorDetail() {
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
                 <div className="flex items-center gap-4">
-                  <Avatar className="w-20 h-20 border-4 border-primary/20">
+                  <Avatar className="w-20 h-20 border-4 border-primary/20" >
+                    <AvatarImage src={doctor.picture || undefined} />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground text-2xl font-bold">
                       SM
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{doctorData.name}</h1>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{doctor.username}</h1>
                     <div className="flex items-center gap-3 mt-1">
-                      <Badge className="bg-primary text-primary-foreground">{doctorData.specialty}</Badge>
+                      <Badge className="bg-primary text-primary-foreground">{doctor.speciality}</Badge>
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 text-warning fill-warning" />
-                        <span className="font-medium">{doctorData.rating}</span>
+                        <span className="font-medium">{doctor.rating}</span>
                       </div>
-                      <Badge className="bg-success text-success-foreground">{doctorData.status}</Badge>
+                      <Badge className="bg-success text-success-foreground">{doctor.status}</Badge>
                     </div>
                   </div>
                 </div>
@@ -132,7 +156,7 @@ export default function DoctorDetail() {
                       <Users className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{doctorData.totalPatients}</p>
+                      <p className="text-2xl font-bold text-foreground">{apiData.totalPatients}</p>
                       <p className="text-xs text-muted-foreground">Total Patients</p>
                     </div>
                   </div>
@@ -158,7 +182,7 @@ export default function DoctorDetail() {
                       <Clock className="w-5 h-5 text-accent" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{doctorData.experience}</p>
+                      <p className="text-2xl font-bold text-foreground">{doctor.experience}</p>
                       <p className="text-xs text-muted-foreground">Experience</p>
                     </div>
                   </div>
@@ -171,7 +195,7 @@ export default function DoctorDetail() {
                       <DollarSign className="w-5 h-5 text-success" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">${doctorData.consultationFee}</p>
+                      <p className="text-2xl font-bold text-foreground">${doctor.consultationFee}</p>
                       <p className="text-xs text-muted-foreground">Consultation Fee</p>
                     </div>
                   </div>
@@ -200,7 +224,7 @@ export default function DoctorDetail() {
                   <CardContent className="space-y-4">
                     <div>
                       <h4 className="font-medium text-foreground mb-2">Education</h4>
-                      <p className="text-sm text-muted-foreground">{doctorData.education}</p>
+                      <p className="text-sm text-muted-foreground">{doctor.education}</p>
                     </div>
                     <div>
                       <h4 className="font-medium text-foreground mb-2">Awards</h4>
@@ -242,15 +266,15 @@ export default function DoctorDetail() {
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-3">
                       <Mail className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{doctorData.email}</span>
+                      <span className="text-sm">{doctor.email}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{doctorData.phone}</span>
+                      <span className="text-sm">{doctor.phone}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Building2 className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{doctorData.hospital}</span>
+                      <span className="text-sm">{doctor.hospital}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -263,7 +287,7 @@ export default function DoctorDetail() {
                     <div>
                       <p className="text-sm text-muted-foreground mb-2">Working Days</p>
                       <div className="flex flex-wrap gap-1">
-                        {doctorData.availableDays.map(day => (
+                        {doctor.availableDays.map(day => (
                           <Badge key={day} variant="outline" className="text-xs">{day.slice(0, 3)}</Badge>
                         ))}
                       </div>
@@ -301,7 +325,7 @@ export default function DoctorDetail() {
                   <CardContent className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">License</span>
-                      <span className="font-medium text-sm">{doctorData.licenseNumber}</span>
+                      <span className="font-medium text-sm">{doctor.licenseNumber}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Languages</span>

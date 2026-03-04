@@ -30,6 +30,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useStaff } from '@/contexts/StaffContext';
 import { z } from 'zod';
+import { useAddStaffMutation } from '@/redux/slices/api';
 
 const staffSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters').max(50),
@@ -72,9 +73,11 @@ const shifts = ['Morning', 'Afternoon', 'Night', 'Rotating'];
 export default function AddStaff() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { addStaff } = useStaff();
+  // const { addStaff } = useStaff();
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof StaffFormData, string>>>({});
+  const [addStaff] = useAddStaffMutation();
+
   
   const [formData, setFormData] = useState<StaffFormData>({
     firstName: '',
@@ -98,54 +101,44 @@ export default function AddStaff() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setErrors({});
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
 
-    try {
-      const validatedData = staffSchema.parse(formData);
-      
-      addStaff({
-        firstName: validatedData.firstName,
-        lastName: validatedData.lastName,
-        email: validatedData.email,
-        phone: validatedData.phone,
-        role: validatedData.role,
-        department: validatedData.department,
-        hospital: validatedData.hospital,
-        shift: validatedData.shift,
-        employeeId: validatedData.employeeId,
-        joinDate: validatedData.joiningDate,
-        salary: validatedData.salary,
-        emergencyContact: validatedData.emergencyContact,
-      });
-      
-      toast({
-        title: "Staff Member Added Successfully",
-        description: `${validatedData.firstName} ${validatedData.lastName} has been added.`,
-      });
-      
-      navigate('/staff');
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const fieldErrors: Partial<Record<keyof StaffFormData, string>> = {};
-        error.errors.forEach(err => {
-          if (err.path[0]) {
-            fieldErrors[err.path[0] as keyof StaffFormData] = err.message;
-          }
-        });
-        setErrors(fieldErrors);
-        toast({
-          title: "Validation Error",
-          description: "Please check the form for errors.",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const result = staffSchema.safeParse(formData);
+
+  if (!result.success) {
+    const fieldErrors: Partial<Record<keyof StaffFormData, string>> = {};
+
+    result.error.errors.forEach((err) => {
+      const field = err.path[0] as keyof StaffFormData;
+      fieldErrors[field] = err.message;
+    });
+
+    setErrors(fieldErrors);
+    return;
+  }
+
+  try {
+    setIsLoading(true);
+
+    await addStaff(formData).unwrap();
+
+    toast({
+      title: "Success",
+      description: "Staff added successfully",
+    });
+
+    navigate("/staff");
+  } catch (err: any) {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: err?.data?.message || "Something went wrong",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-background">

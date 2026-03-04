@@ -3,12 +3,11 @@ import { QRCodeCanvas } from "qrcode.react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { Mail, Phone, MapPin, User, Stethoscope, Building2 } from "lucide-react";
+import { useGetPatientByIdQuery } from "@/redux/slices/api";
 
 export default function ReportHeader() {
   const { id } = useParams();
-  const patient = useSelector((state: RootState) =>
-    state.patients.list.find(p => p.id === Number(id))
-  );
+  const { data: patient, isLoading, isError } = useGetPatientByIdQuery(id);
   const doctor = useSelector((state: RootState) => state.app.doctorUser);
   const reportUrl = `${window.location.origin}/reports/print/${patient?.id}`;
 

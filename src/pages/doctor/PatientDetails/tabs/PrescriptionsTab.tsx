@@ -3,13 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RootState } from "@/redux/store";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { useGetPatientByIdQuery } from "@/redux/slices/api";
 
 export default function PrescriptionsTab() {
   const { id } = useParams();
 
-  const patient = useSelector((state: RootState) =>
-    state.patients.list.find(p => p.id === Number(id))
-  );
+  const { data: patient, isLoading, isError } = useGetPatientByIdQuery(id);
 
   if (!patient || patient.prescriptions.length === 0) {
     return <p className="text-muted-foreground">No prescriptions found.</p>;

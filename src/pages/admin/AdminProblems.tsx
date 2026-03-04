@@ -21,26 +21,38 @@ import { getProblemsByHospitalName } from '@/data/problemsData';
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import { logout as logoutAction } from "@/redux/slices/appSlice";
+import { useGetAdminDetailsQuery, useGetProblemsByHospitalQuery } from '@/redux/slices/api';
 
 export default function AdminProblems() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { user, isLoggedIn } = useSelector(
-    (state: RootState) => state.app
-  );
-  const [searchQuery, setSearchQuery] = useState('');
+  const { adminUser } = useSelector((state: RootState) => state.app);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const problems = useMemo(() => {
-    if (user?.hospital) {
-      return getProblemsByHospitalName(user.hospital);
-    }
-    return [];
-  }, [user?.hospital]);
+  const { data: admin, isLoading: IsLoadingAdmin, isError: isErrorAdmin } = useGetAdminDetailsQuery(String(adminUser.id));
 
-  const filteredProblems = problems.filter(problem =>
+  const {
+    data: problems = [],
+    isLoading,
+    isError,
+  } = useGetProblemsByHospitalQuery(admin?.hospital || "", {
+    skip: !admin?.hospital,
+  });
+
+  
+
+  const filteredProblems = problems.filter((problem) =>
     problem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     problem.department.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const openCount = problems.filter((p) => p.status === "Open").length;
+  const inProgressCount = problems.filter(
+    (p) => p.status === "In Progress"
+  ).length;
+  const resolvedCount = problems.filter(
+    (p) => p.status === "Resolved"
+  ).length;
+
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -73,9 +85,9 @@ export default function AdminProblems() {
     }
   };
 
-  const openCount = problems.filter(p => p.status === 'Open').length;
-  const inProgressCount = problems.filter(p => p.status === 'In Progress').length;
-  const resolvedCount = problems.filter(p => p.status === 'Resolved').length;
+  if (isLoading || IsLoadingAdmin) return <div>Loading problems...</div>;
+  if (isError || isErrorAdmin) return <div>Error loading problems</div>;
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -96,10 +108,10 @@ export default function AdminProblems() {
                   Problems & Complaints
                 </h1>
                 <p className="text-muted-foreground">
-                  Track and resolve issues for {user?.hospital}
+                  Track and resolve issues for {adminUser?.hospital}
                 </p>
               </div>
-              <Button className="gap-2">
+              <Button className="gap-2"onClick={() => navigate('/problems/add')}>
                 <Plus className="w-4 h-4" />
                 Report Problem
               </Button>

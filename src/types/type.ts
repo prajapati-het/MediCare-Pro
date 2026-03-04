@@ -1,5 +1,6 @@
 export interface DoctorType {
     id: number;
+    doctorCode:number;
     username: string;
     email: string;
     picture?: string;
@@ -15,6 +16,24 @@ export interface DoctorType {
     availableDays: string[];
     nextAvailable: string;
     rating: string;
+}
+
+export interface AddDoctorRequest {
+  username: string;
+  email: string;
+  hospital: string;
+  speciality: string;
+  phone: string;
+  experience: string;
+  consultationFee: number;
+  education: string;
+  licenseNumber: string;
+  availableDays: string[];
+}
+
+export interface AddDoctorResponse {
+  message: string;
+  doctor: DoctorType;
 }
 
 export interface AdminType {
@@ -37,6 +56,26 @@ export interface StaffType {
     id: number;
     username: string;
     hospital: string;
+}
+
+
+export interface AddStaffRequest {
+  _id: string;
+  id: number;
+  name: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  department: string;
+  email: string;
+  phone: string;
+  hospital: string;
+  shift: string;
+  status: "on-duty" | "off-duty" | "on-leave";
+  joinDate: string;
+  employeeId: string;
+  salary: number;
+  emergencyContact: string;
 }
 
 export interface googleSignInResponseType {
@@ -67,7 +106,7 @@ export interface Appointment {
   patientName: string;
   time: string;
   date: string;
-  type: string;
+  type?: string;
   status: string;
   notes?: string;
   duration: number;
@@ -204,4 +243,61 @@ export interface AppointmentWithPatientInfo extends Appointment {
   contact: string;         
   email: string;           
   tag: string;               
+}
+
+
+export interface FacilityResponseType {
+  _id: string;
+  id: number;
+  hospitalId: string;
+  name: string;
+  type: "Ward" | "Department" | "Lab" | "Surgical" | "Emergency" | "Support";
+  totalBeds: number;
+  occupied: number;
+  equipment: number;
+  status: "Operational" | "Maintenance" | "Closed";
+  floor: string;
+  headOfDepartment: string;
+  contact: string;
+  description: string;
+  lastMaintenance: string;
+  nextMaintenance: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+
+export interface ProblemType {
+  id: number;
+  hospitalId: string;
+  title: string;
+  department: string;
+  priority: "Critical" | "High" | "Medium" | "Low";
+  status: "Open" | "In Progress" | "Resolved" | "Closed";
+  reportedBy: string;
+  reportedAt: string;
+  assignedTo: string;
+  resolvedAt: string | null;
+  description: string;
+  resolution: string | null;
+  category:
+    | "Equipment"
+    | "Staffing"
+    | "Supply"
+    | "Infrastructure"
+    | "Patient Care"
+    | "Other";
+}
+
+
+export interface AddProblemPayload {
+  hospitalId: string;
+  title: string;
+  department: string;
+  priority: "Critical" | "High" | "Medium" | "Low";
+  status: "Open" | "In Progress" | "Resolved" | "Closed";
+  reportedBy: string;
+  assignedTo: string;
+  description: string;
+  category: "Equipment" | "Staffing" | "Supply" | "Infrastructure" | "Patient Care" | "Other";
 }

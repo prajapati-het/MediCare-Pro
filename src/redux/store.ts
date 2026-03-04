@@ -1,8 +1,8 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import appReducer from "./slices/appSlice";
 // import userReducer from "./slices/userSlice";
-import appointmentsReducer from "./slices/appointmentsSlice";
-import patientsReducer from "./slices/patientsSlice";
+// import appointmentsReducer from "./slices/appointmentsSlice";
+// import patientsReducer from "./slices/patientsSlice";
 import { doctorSlice } from "./slices/doctorSlice"; // ✅ new
 import { api } from "./slices/api";
 
@@ -21,14 +21,14 @@ import storage from "redux-persist/lib/storage";
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["app", "appointments", "patients", "doctor"], // ✅ added doctor slice
+  whitelist: ["app", /*"appointments", "patients", */ "doctor"], // ✅ added doctor slice
 };
 
 const rootReducer = combineReducers({
   app: appReducer,
   // user: userReducer,
-  appointments: appointmentsReducer,
-  patients: patientsReducer,
+  // appointments: appointmentsReducer,
+  // patients: patientsReducer,
   doctor: doctorSlice.reducer, // ✅ doctor slice
   [api.reducerPath]: api.reducer,
 });

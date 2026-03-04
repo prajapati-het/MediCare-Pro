@@ -36,20 +36,48 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useStaff } from '@/contexts/StaffContext';
+import { useDeleteStaffMutation, useGetAdminDetailsQuery, useGetHospitalByIdQuery, useGetStaffQuery } from '@/redux/slices/api';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 
 const departments = ['All', 'ICU', 'Emergency', 'Laboratory', 'Pharmacy', 'Radiology', 'Administration', 'Cardiology', 'Neurology', 'Pediatrics', 'Oncology'];
 
 export default function Staff() {
   const navigate = useNavigate();
-  const { staffMembers, deleteStaff } = useStaff();
+
+  const { adminUser, isLoggedIn } = useSelector(
+    (state: RootState) => state.app
+  );
+
+  const { data: admin, isLoading: LoadingAdmin, isError } = useGetAdminDetailsQuery(String(adminUser.id));
+
+  console.log(admin)
+  const hospitalId = admin?.hospital;
+  const { data: hospital } =  useGetHospitalByIdQuery(hospitalId!, {
+    skip: !hospitalId,
+  });
+
+  const hospitalName = hospital?.name
+
+  const { data: staffMembers = [], isLoading } =  useGetStaffQuery(hospitalName);
+
+  console.log(staffMembers)
+
+  const [deleteStaff] = useDeleteStaffMutation();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('All');
 
-  const filteredStaff = staffMembers.filter(s => {
-    const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+
+  const filteredStaff = staffMembers.filter((s) => {
+    const matchesSearch =
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.role.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDepartment = selectedDepartment === 'All' || s.department === selectedDepartment;
+
+    const matchesDepartment =
+      selectedDepartment === 'All' ||
+      s.department === selectedDepartment;
+
     return matchesSearch && matchesDepartment;
   });
 
@@ -261,7 +289,7 @@ export default function Staff() {
                                   <Edit className="w-4 h-4 mr-2" />
                                   Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive" onClick={() => deleteStaff(staff.id)}>
+                                <DropdownMenuItem className="text-destructive" onClick={() => deleteStaff(String(staff.id))}>
                                   <Trash2 className="w-4 h-4 mr-2" />
                                   Remove
                                 </DropdownMenuItem>

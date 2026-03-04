@@ -22,25 +22,46 @@ import { getFacilitiesByHospitalName } from '@/data/facilitiesData';
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import { logout as logoutAction } from "@/redux/slices/appSlice";
+import { useGetAdminDetailsQuery, useGetFacilitiesQuery, useGetHospitalByIdQuery } from '@/redux/slices/api';
 
 export default function AdminFacilities() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { user, isLoggedIn } = useSelector(
-    (state: RootState) => state.app
-  );
-  const [searchQuery, setSearchQuery] = useState('');
 
-  const facilities = useMemo(() => {
-    if (user?.hospital) {
-      return getFacilitiesByHospitalName(user.hospital);
-    }
-    return [];
-  }, [user?.hospital]);
+  const { adminUser, isLoggedIn } = useSelector(
+      (state: RootState) => state.app
+    );
+  
+    const { data: admin, isLoading: IsLoadingAdmin, isError: isErrorAdmin } = useGetAdminDetailsQuery(String(adminUser.id));
+  
+    const hospitalId = admin?.hospital;
+    const { data: hospital, isLoading: isLoadingHospital, isError: isErrorHospital } =
+    useGetHospitalByIdQuery(hospitalId!, {
+      skip: !hospitalId,
+    });
 
-  const filteredFacilities = facilities.filter(facility =>
+  
+    const hospitalName = hospital?.name
+    
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const {
+    data,
+    isLoading,
+    isError,
+  } = useGetFacilitiesQuery(hospitalId!, {
+    skip: !hospitalId,
+  });
+
+  const facilities = data?.data || [];
+
+  const filteredFacilities = facilities.filter((facility) =>
     facility.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const totalBeds = facilities.reduce((acc, f) => acc + f.totalBeds, 0);
+  const occupiedBeds = facilities.reduce((acc, f) => acc + f.occupied, 0);
+  const totalEquipment = facilities.reduce((acc, f) => acc + f.equipment, 0);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -55,9 +76,10 @@ export default function AdminFacilities() {
     visible: { opacity: 1, y: 0 },
   };
 
-  const totalBeds = facilities.reduce((acc, f) => acc + f.totalBeds, 0);
-  const occupiedBeds = facilities.reduce((acc, f) => acc + f.occupied, 0);
-  const totalEquipment = facilities.reduce((acc, f) => acc + f.equipment, 0);
+
+  if (isLoading || IsLoadingAdmin || isLoadingHospital ) return <div>Loading facilities...</div>;
+  if (isError || isErrorAdmin || isErrorHospital ) return <div>Error loading facilities</div>;
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,10 +100,10 @@ export default function AdminFacilities() {
                   Facilities Management
                 </h1>
                 <p className="text-muted-foreground">
-                  Manage wards and equipment for {user?.hospital}
+                  Manage wards and equipment for {hospitalName}
                 </p>
               </div>
-              <Button className="gap-2">
+              <Button className="gap-2" onClick={() => navigate('/facilities/add')}>
                 <Plus className="w-4 h-4" />
                 Add Facility
               </Button>

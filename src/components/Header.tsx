@@ -55,7 +55,7 @@ export function Header() {
   const isLanding = location.pathname === "/";
 
   const handleBookAppointments = () => {
-    navigate(isLoggedIn ? "/dashboard" : "/auth");
+    navigate("/bookappointment");
   };
 
  const handleLogout = async () => {

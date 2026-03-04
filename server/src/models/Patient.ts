@@ -103,38 +103,39 @@ const PatientSchema = new Schema<IPatient>(
       type: Number,
       required: true,
       min: 0,
+      default:0
     },
     gender: {
       type: String,
-      required: true,
+      default: ""
     },
     phone: {
       type: String,
-      required: true,
       trim: true,
+      default: ""
     },
     email: {
       type: String,
-      required: true,
       trim: true,
+      default: ""
     },
     address: {
       type: String,
-      required: true,
+      default: ""
     },
     bloodGroup: {
       type: String,
-      required: true,
+      default: ""
     },
     lastVisit: String,
     nextAppointment: String,
     condition: {
       type: String,
-      required: true,
+      default: ""
     },
     diagnosis: {
       type: String,
-      required: true,
+      default: ""
     },
     status: {
       type: String,
@@ -167,63 +168,114 @@ const PatientSchema = new Schema<IPatient>(
       default: "",
     },
     emergencyContact: {
-      name: { type: String, required: true },
-      relation: { type: String, required: true },
-      phone: { type: String, required: true },
+      type: {
+        name: { type: String, default: "" },
+        relation: { type: String, default: "" },
+        phone: { type: String, default: "" },
+      },
+      default: () => ({
+        name: "",
+        relation: "",
+        phone: "",
+      }),
     },
     vitals: {
-      bloodPressure: String,
-      heartRate: String,
-      temperature: String,
-      weight: String,
-      height: String,
-      bmi: String,
-      oxygenSaturation: String,
-      respiratoryRate: String,
+      type: {
+        bloodPressure: { type: String, default: "" },
+        heartRate: { type: String, default: "" },
+        temperature: { type: String, default: "" },
+        weight: { type: String, default: "" },
+        height: { type: String, default: "" },
+        bmi: { type: String, default: "" },
+        oxygenSaturation: { type: String, default: "" },
+        respiratoryRate: { type: String, default: "" },
+      },
+      default: () => ({
+        bloodPressure: "",
+        heartRate: "",
+        temperature: "",
+        weight: "",
+        height: "",
+        bmi: "",
+        oxygenSaturation: "",
+        respiratoryRate: "",
+      }),
     },
+
     bodyCharacteristics: {
-      skinType: String,
-      eyeColor: String,
-      hairColor: String,
-      bodyType: String,
+      type: {
+        skinType: { type: String, default: "" },
+        eyeColor: { type: String, default: "" },
+        hairColor: { type: String, default: "" },
+        bodyType: { type: String, default: "" },
+      },
+      default: () => ({
+        skinType: "",
+        eyeColor: "",
+        hairColor: "",
+        bodyType: "",
+      }),
     },
+
     lifestyle: {
-      smokingStatus: String,
-      alcoholConsumption: String,
-      exerciseFrequency: String,
-      dietType: String,
-      sleepHours: String,
+      type: {
+        smokingStatus: { type: String, default: "" },
+        alcoholConsumption: { type: String, default: "" },
+        exerciseFrequency: { type: String, default: "" },
+        dietType: { type: String, default: "" },
+        sleepHours: { type: String, default: "" },
+      },
+      default: () => ({
+        smokingStatus: "",
+        alcoholConsumption: "",
+        exerciseFrequency: "",
+        dietType: "",
+        sleepHours: "",
+      }),
     },
-    labResults: [
-      {
-        testName: String,
-        value: String,
-        normalRange: String,
-        date: String,
-        status: {
-          type: String,
-          enum: ["Normal", "Abnormal", "Critical"],
+
+    labResults: {
+      type: [
+        {
+          testName: { type: String, default: "" },
+          value: { type: String, default: "" },
+          normalRange: { type: String, default: "" },
+          date: { type: String, default: "" },
+          status: {
+            type: String,
+            enum: ["Normal", "Abnormal", "Critical"],
+            default: "Normal",
+          },
         },
-      },
-    ],
-    prescriptions: [
-      {
-        medication: String,
-        dosage: String,
-        frequency: String,
-        startDate: String,
-        endDate: String,
-        prescribedBy: String,
-      },
-    ],
-    visitHistory: [
-      {
-        date: String,
-        reason: String,
-        diagnosis: String,
-        treatment: String,
-      },
-    ],
+      ],
+      default: [],
+    },
+
+    prescriptions: {
+      type: [
+        {
+          medication: { type: String, default: "" },
+          dosage: { type: String, default: "" },
+          frequency: { type: String, default: "" },
+          startDate: { type: String, default: "" },
+          endDate: { type: String, default: "" },
+          prescribedBy: { type: String, default: "" },
+        },
+      ],
+      default: [],
+    },
+
+    visitHistory: {
+      type: [
+        {
+          date: { type: String, default: "" },
+          reason: { type: String, default: "" },
+          diagnosis: { type: String, default: "" },
+          treatment: { type: String, default: "" },
+        },
+      ],
+      default: [],
+    },
     notes: {
       type: String,
       default: "",

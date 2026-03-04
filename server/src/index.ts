@@ -11,6 +11,10 @@ import { AppointmentRouter } from "./routes/AppointmentRouter.js";
 import { PatientRouter } from "./routes/PatientRouter.js";
 import { AdminRouter } from "./routes/AdminRouter.js";
 import { HospitalRouter } from "./routes/HospitalRouter.js";
+import StaffRouter from "./routes/StaffRouter.js";
+import FacilityRouter from "./routes/FacilityRouter.js";
+import ProblemRouter from "./routes/ProblemRouter.js";
+import DoctorStatsRouter from "./routes/doctorStatsRouter.js";
 
 config();
 
@@ -21,7 +25,7 @@ app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
 
 
 app.use((req, res, next) => {
-  console.log("Incoming request:", req.method, req.url);
+  console.log("Incoming request inside index:", req.method, req.url);
   next();
 });
 
@@ -31,6 +35,11 @@ app.use("/appointments", AppointmentRouter);
 app.use("/patients", PatientRouter);
 app.use("/admin", AdminRouter);
 app.use("/hospitals", HospitalRouter);
+app.use("/staff", StaffRouter);
+app.use("/facilities", FacilityRouter);
+app.use("/problems", ProblemRouter);
+app.use('/doctor-stats', DoctorStatsRouter);
+
 
 
 

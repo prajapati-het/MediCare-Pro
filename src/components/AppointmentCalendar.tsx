@@ -19,11 +19,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { useDispatch, useSelector } from "react-redux";
-import { updateAppointment } from "@/redux/slices/appointmentsSlice";
+// import { updateAppointment } from "@/redux/slices/appointmentsSlice";
 import { RootState } from "@/redux/store";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { useNavigate } from "react-router-dom";
-import { useGetAppointmentsQuery } from "@/redux/slices/api";
+import { useGetAppointmentsQuery, useUpdateAppointmentStatusMutation } from "@/redux/slices/api";
 import { useAppDispatch } from "@/redux/hooks";
 import { Appointment } from "@/types/type";
 
@@ -35,6 +35,7 @@ export function AppointmentCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const dispatch = useAppDispatch();
+  const [updateAppointmentStatus] = useUpdateAppointmentStatusMutation();
 
 // Filter appointments for this doctor
 const appointments = useMemo(() => {
@@ -48,15 +49,21 @@ useAutoRefresh(() => {}, 60000);
 /* ---------- AUTO DELAY ---------- */
 useEffect(() => {
   const now = new Date();
+
   appointments.forEach((apt) => {
     const apptDateTime = new Date(`${apt.date} ${apt.time}`);
-    if (now > apptDateTime && ["Pending", "Confirmed"].includes(apt.status)) {
-      dispatch(
-        updateAppointment({ id: apt.id, changes: { status: "Delayed" } })
-      );
+
+    if (
+      now > apptDateTime &&
+      ["Pending", "Confirmed"].includes(apt.status)
+    ) {
+      updateAppointmentStatus({
+        id: String(apt.id),
+        status: "Delayed",
+      });
     }
   });
-}, [appointments, dispatch]);
+}, [appointments, updateAppointmentStatus]);
 
 // Effective status based on current time
 const getEffectiveStatus = useCallback((apt: Appointment) => {

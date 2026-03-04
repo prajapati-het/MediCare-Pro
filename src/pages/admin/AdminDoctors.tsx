@@ -70,8 +70,6 @@ export default function AdminDoctors() {
     doctor.speciality.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  console.log(filteredDoctors)
-
   const handleDelete = (id: number, name: string) => {
     toast({
       title: "Doctor Removed",

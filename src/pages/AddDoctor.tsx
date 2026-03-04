@@ -32,6 +32,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useDoctors } from '@/contexts/DoctorsContext';
 import { z } from 'zod';
+import { useAddDoctorMutation } from '@/redux/slices/api';
+import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 const doctorSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters').max(50),
@@ -69,9 +71,10 @@ const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 export default function AddDoctor() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { addDoctor } = useDoctors();
-  const [isLoading, setIsLoading] = useState(false);
+  // const { addDoctor } = useDoctors();
+  // const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof DoctorFormData, string>>>({});
+  const [addDoctor, { isLoading }] = useAddDoctorMutation();
   
   const [formData, setFormData] = useState<DoctorFormData>({
     firstName: '',
@@ -104,53 +107,43 @@ export default function AddDoctor() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setErrors({});
+  e.preventDefault();
 
-    try {
-      const validatedData = doctorSchema.parse(formData);
-      
-      addDoctor({
-        firstName: validatedData.firstName,
-        lastName: validatedData.lastName,
-        email: validatedData.email,
-        phone: validatedData.phone,
-        specialty: validatedData.specialty,
-        hospital: validatedData.hospital,
-        licenseNumber: validatedData.licenseNumber,
-        experience: `${validatedData.experience} years`,
-        education: validatedData.education,
-        consultationFee: validatedData.consultationFee,
-        bio: validatedData.bio || '',
-        availableDays: validatedData.availableDays,
-      });
-      
-      toast({
-        title: "Doctor Added Successfully",
-        description: `Dr. ${validatedData.firstName} ${validatedData.lastName} has been added.`,
-      });
-      
-      navigate('/doctors');
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const fieldErrors: Partial<Record<keyof DoctorFormData, string>> = {};
-        error.errors.forEach(err => {
-          if (err.path[0]) {
-            fieldErrors[err.path[0] as keyof DoctorFormData] = err.message;
-          }
-        });
-        setErrors(fieldErrors);
-        toast({
-          title: "Validation Error",
-          description: "Please check the form for errors.",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  try {
+    const validatedData = doctorSchema.parse(formData);
+
+    await addDoctor({
+      username: `${validatedData.firstName} ${validatedData.lastName}`,
+      email: validatedData.email,
+      hospital: validatedData.hospital,
+      speciality: validatedData.specialty,
+      phone: validatedData.phone,
+      experience: `${validatedData.experience} years`,
+      consultationFee: validatedData.consultationFee,
+      education: validatedData.education,
+      licenseNumber: validatedData.licenseNumber,
+      availableDays: validatedData.availableDays,
+    }).unwrap();
+
+    toast({
+      title: "Doctor Added Successfully",
+      description: "Doctor has been added to database.",
+    });
+
+    navigate("/doctors");
+  } catch (err: unknown) {
+    const error = err as FetchBaseQueryError;
+
+    toast({
+      title: "Error",
+      description:
+        "data" in error
+          ? (error.data as { message?: string })?.message
+          : "Something went wrong",
+      variant: "destructive",
+    });
+  }
+};
 
   return (
     <div className="min-h-screen bg-background">

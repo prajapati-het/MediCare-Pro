@@ -2,12 +2,11 @@ import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { RootState } from "@/redux/store";
 import { motion } from "framer-motion";
+import { useGetPatientByIdQuery } from "@/redux/slices/api";
 
 export default function HistoryTab() {
   const { id } = useParams();
-  const patient = useSelector((state: RootState) =>
-    state.patients.list.find(p => p.id === Number(id))
-  );
+  const { data: patient, isLoading, isError } = useGetPatientByIdQuery(id);
 
   if (!patient || patient.visitHistory.length === 0) {
     return <p className="text-muted-foreground mt-2">No visit history available.</p>;

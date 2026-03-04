@@ -4,13 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { RootState } from "@/redux/store";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { useGetPatientByIdQuery } from "@/redux/slices/api";
 
 export default function LabsTab() {
   const { id } = useParams();
 
-  const patient = useSelector((state: RootState) =>
-    state.patients.list.find(p => p.id === Number(id))
-  );
+  const { data: patient, isLoading, isError } = useGetPatientByIdQuery(id);
 
   if (!patient || patient.labResults.length === 0) {
     return <p className="text-muted-foreground">No lab reports available.</p>;

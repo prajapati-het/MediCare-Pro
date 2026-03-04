@@ -7,11 +7,11 @@ export interface IAppointment {
   patientName: string;
   time: string;
   date: string;
-  type: string;
+  type?: string;
   status: string;
   notes?: string;
   duration: number;
-  room: string;
+  room?: string;
   cancelReason?: string;
 }
 
@@ -45,11 +45,10 @@ const AppointmentSchema = new Schema<IAppointment>(
     },
     type: {
       type: String,
-      required: true,
     },
     status: {
       type: String,
-      required: true,
+      default: "Pending"
     },
     notes: {
       type: String,
@@ -57,11 +56,10 @@ const AppointmentSchema = new Schema<IAppointment>(
     },
     duration: {
       type: Number,
-      required: true,
+      default: 15
     },
     room: {
       type: String,
-      required: true,
     },
     cancelReason: {
       type: String,
