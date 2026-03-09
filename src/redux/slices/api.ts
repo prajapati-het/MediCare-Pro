@@ -349,6 +349,39 @@ export const api = createApi({
     }),
 
 
+    /* ===================== BILL ***************************** */
+
+    createBill: builder.mutation({
+      query: (data) => ({
+        url: "/bill/create",
+        method: "POST",
+        body: data,
+      }),
+    }),
+
+    getBillById: builder.query({
+      query: (id) => `/bill/${id}`,
+    }),
+
+    getBillsByDoctor: builder.query({
+      query: (doctorCode) =>
+        `/bill/doctor/${doctorCode}`,
+    }),
+
+    getBillsByPatient: builder.query({
+      query: (patientId) =>
+        `/bill/patient/${patientId}`,
+    }),
+
+    updateBillStatus: builder.mutation({
+      query: ({ id, status }) => ({
+        url: `/bill/${id}/status`,
+        method: "PUT",
+        body: { status },
+      }),
+    }),
+
+
   }),
 });
 
@@ -405,6 +438,13 @@ export const {
   useAddProblemMutation,
 
 
-  useGetDoctorStatsQuery
+  useGetDoctorStatsQuery,
+
+
+  useCreateBillMutation,
+  useGetBillByIdQuery,
+  useGetBillsByDoctorQuery,
+  useGetBillsByPatientQuery,
+  useUpdateBillStatusMutation,
 
 } = api;

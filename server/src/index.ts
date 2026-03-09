@@ -15,6 +15,7 @@ import StaffRouter from "./routes/StaffRouter.js";
 import FacilityRouter from "./routes/FacilityRouter.js";
 import ProblemRouter from "./routes/ProblemRouter.js";
 import DoctorStatsRouter from "./routes/doctorStatsRouter.js";
+import BillRouter from "./routes/BillRouter.js";
 
 config();
 
@@ -39,6 +40,7 @@ app.use("/staff", StaffRouter);
 app.use("/facilities", FacilityRouter);
 app.use("/problems", ProblemRouter);
 app.use('/doctor-stats', DoctorStatsRouter);
+app.use('/bill', BillRouter);
 
 
 

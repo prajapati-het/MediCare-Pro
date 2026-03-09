@@ -12,6 +12,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import {
@@ -23,6 +24,8 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import {
+  useCreateBillMutation,
+  useGetBillsByPatientQuery,
   useGetDoctorDetailsQuery,
   useGetDoctorPatientsQuery,
   useGetPatientByIdQuery,
@@ -41,6 +44,9 @@ interface MedicineItem {
 export default function PatientBill() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [billNumber, setBillNumber] = useState<string>("");
+
+  const [createBill] = useCreateBillMutation();
 
   const { data: patient, isLoading, isError } = useGetPatientByIdQuery(id!);
   let currentUser = useSelector((state: RootState) => state.app.doctorUser);
@@ -56,21 +62,53 @@ export default function PatientBill() {
   );
 
   currentUser = doctor;
+
+  console.log(patient)
+
+  const {
+  data: billData,
+  isLoading: billLoading,
+  refetch: refetchBill,
+} = useGetBillsByPatientQuery(Number(patient?.id), {
+  skip: !patient?.id,
+});
+
+  const bill = billData?.[0];
+
+  console.log(billData)
+
+ const saveBill = async () => {
+  if (!patient || !currentUser) return;
+
+  const res = await createBill({
+    doctorId: currentUser._id,
+    doctorCode: currentUser.doctorCode,
+
+    patientId: patient.id, // ✅ changed
+
+    medicines,
+    consultationFee,
+    labTestsFee: labTests,
+    subtotal,
+    tax,
+    total,
+  }).unwrap();
+
+  setBillNumber(res.data.billNumber);
+};
+  
+
   const reportUrl = `${window.location.origin}/bill/${patient?.id}`;
 
-  const medicines: MedicineItem[] = [
-    { id: 1, name: "Amoxicillin", dosage: "500mg",   quantity: 30, pricePerUnit: 12, total: 360 },
-    { id: 2, name: "Paracetamol", dosage: "650mg",   quantity: 20, pricePerUnit: 3,  total: 60  },
-    { id: 3, name: "Omeprazole",  dosage: "20mg",    quantity: 14, pricePerUnit: 8,  total: 112 },
-    { id: 4, name: "Vitamin D3",  dosage: "2000 IU", quantity: 30, pricePerUnit: 15, total: 450 },
-  ];
+  const medicines: MedicineItem[] = bill?.medicines ?? [];
 
-  const consultationFee = 500;
-  const labTests = 1200;
-  const subtotal =
-    medicines.reduce((sum, med) => sum + med.total, 0) + consultationFee + labTests;
-  const tax = subtotal * 0.05;
-  const total = subtotal + tax;
+  const consultationFee = bill?.consultationFee ?? 0;
+const labTests = bill?.labTestsFee ?? 0;
+  const subtotal = bill?.subtotal ?? 0;
+const tax = bill?.tax ?? 0;
+const total = bill?.total ?? 0;
+
+const currentBillNumber = bill?.billNumber ?? billNumber;
 
   const billDate = new Date().toLocaleDateString("en-IN", {
     year: "numeric",
@@ -78,13 +116,16 @@ export default function PatientBill() {
     day: "numeric",
   });
 
-  const billNumber = `BILL-${patient?.id}-${Date.now().toString().slice(-6)}`;
 
-  const handlePrint = () => {
-    setTimeout(() => window.print(), 100);
+  const handlePrint = async () => {
+    await saveBill();
+    setTimeout(() => window.print(), 200);
   };
 
   const handleDownload = async (format: "png" | "jpeg" | "pdf") => {
+    if (!currentBillNumber) {
+    await saveBill();
+  }
     const element = document.getElementById("bill-preview");
     if (!element) return;
 
@@ -97,11 +138,11 @@ export default function PatientBill() {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${billNumber}.pdf`);
+      pdf.save(`${currentBillNumber}.pdf`);
     } else {
       const link = document.createElement("a");
       link.href = canvas.toDataURL(`image/${format}`);
-      link.download = `${billNumber}.${format}`;
+      link.download = `${currentBillNumber}.${format}`;
       link.click();
     }
   };
@@ -116,7 +157,7 @@ export default function PatientBill() {
     tax,
     total,
     billDate,
-    billNumber,
+    currentBillNumber,
     reportUrl,
   };
 
@@ -148,7 +189,7 @@ export default function PatientBill() {
             {/* Bill identity */}
             <div className="hidden md:flex flex-col items-center leading-tight">
               <span className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">Invoice</span>
-              <span className="text-sm font-semibold text-slate-700 font-mono">{billNumber}</span>
+              <span className="text-sm font-semibold text-slate-700 font-mono">{currentBillNumber}</span>
             </div>
 
             {/* Action buttons */}
@@ -254,7 +295,7 @@ export default function PatientBill() {
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                 Bill Preview
               </span>
-              <span className="ml-auto text-xs text-slate-400 font-mono">{billNumber}</span>
+              <span className="ml-auto text-xs text-slate-400 font-mono">{currentBillNumber}</span>
             </div>
 
             {/* BillPreview component */}

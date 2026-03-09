@@ -31,7 +31,7 @@ interface BillPreviewProps {
   tax: number;
   total: number;
   billDate: string;
-  billNumber: string;
+  currentBillNumber: string;
   reportUrl: string;
 }
 
@@ -45,7 +45,7 @@ export default function BillPreview({
   tax,
   total,
   billDate,
-  billNumber,
+  currentBillNumber,
   reportUrl,
 }: BillPreviewProps) {
     console.log(currentUser)
@@ -140,7 +140,7 @@ export default function BillPreview({
               <h2 className="text-2xl font-bold text-gray-900">INVOICE</h2>
             </div>
             <p className="text-sm text-gray-600">
-              Bill Number: <span className="font-semibold">{billNumber}</span>
+              Bill Number: <span className="font-semibold">{currentBillNumber}</span>
             </p>
           </div>
           <div className="text-right">
