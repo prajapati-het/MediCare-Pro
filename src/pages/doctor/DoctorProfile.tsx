@@ -26,21 +26,30 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAppSelector } from '@/redux/hooks';
 import { selectPatientsByDoctor } from '@/selectors/selectors';
-import { useGetDoctorDetailsQuery, useGetDoctorPatientsQuery } from '@/redux/slices/api';
+import { useGetDoctorDetailsQuery, useGetDoctorPatientsQuery, useUpdateDoctorStatusMutation } from '@/redux/slices/api';
 import { setDoctorInfo } from '@/redux/slices/doctorSlice';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { EditDoctorProfile } from './EditDoctorProfile';
 
-type DoctorStatus = "active" | "on-leave" | "busy";
+type DoctorStatus = "Active" | "On Leave" | "Inactive";
 
 export default function DoctorProfile() {
   const dispatch = useDispatch();
   const { toast } = useToast();
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [updateStatus] = useUpdateDoctorStatusMutation();
+
 
   let currentUser = useSelector(
     (state: RootState) => state.app.doctorUser
   );
 
-  const { data: doctor, isLoading, isError } = useGetDoctorDetailsQuery(String(currentUser.id));
+  const {
+  data: doctor,
+  isLoading,
+  isError,
+  refetch,
+} = useGetDoctorDetailsQuery(String(currentUser.id));
   const { data: apiData } = useGetDoctorPatientsQuery(String(currentUser.id?? null), {
       skip: currentUser.id == null
     });
@@ -71,7 +80,7 @@ export default function DoctorProfile() {
     visible: { opacity: 1, y: 0 },
   };
   
-  const currentStatus = (currentUser?.status || "active") as DoctorStatus;
+  const currentStatus: DoctorStatus =  (currentUser?.status as DoctorStatus) ?? "Active";
 
 const convertTo24Hour = (time?: string | null) => {
   if (!time) return "N/A";
@@ -101,35 +110,48 @@ const convertTo24Hour = (time?: string | null) => {
   return `${hh.toString().padStart(2, "0")}:${mm}`;
 };
 
-  const handleStatusChange = (newStatus: DoctorStatus) => {
-    dispatch(updateDoctorStatus(newStatus));
-    toast({
-      title: "Status Updated",
-      description: `Your status has been changed to ${newStatus.replace('-', ' ')}`,
-      duration: 3000,
-    });
+  const handleStatusChange = async (newStatus: DoctorStatus) => {
+    try {
+      await updateStatus({
+        DoctorCode: String(currentUser.doctorCode),
+        status: newStatus,
+      }).unwrap();
+
+      await refetch();
+
+      toast({
+        title: "Status Updated",
+        description: `Status changed to ${newStatus}`,
+      });
+
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to update status",
+      });
+    }
   };
 
   const getStatusConfig = (status: DoctorStatus) => {
     switch (status) {
-      case "active":
+      case "Active":
         return {
           icon: CheckCircle2,
           label: "Active",
           color: "bg-emerald-500 hover:bg-emerald-600 text-white",
           badgeColor: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20",
         };
-      case "on-leave":
+      case "On Leave":
         return {
           icon: Coffee,
           label: "On Leave",
           color: "bg-amber-500 hover:bg-amber-600 text-white",
           badgeColor: "bg-amber-500/10 text-amber-700 border-amber-500/20",
         };
-      case "busy":
+      case "Inactive":
         return {
           icon: AlertCircle,
-          label: "Busy",
+          label: "Inactive",
           color: "bg-red-500 hover:bg-red-600 text-white",
           badgeColor: "bg-red-500/10 text-red-700 border-red-500/20",
         };
@@ -232,14 +254,22 @@ const convertTo24Hour = (time?: string | null) => {
                         
                         <div className="flex flex-wrap items-center gap-3">
                           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button className="gap-2 h-11 px-6">
+                            <Button className="gap-2 h-11 px-6" onClick={() => setIsEditOpen(true)}>
                               <Edit className="w-4 h-4" />
                               Edit Profile
                             </Button>
                           </motion.div>
+
+                          {isEditOpen && currentUser && (
+                            <EditDoctorProfile
+                              doctor={currentUser}
+                              onClose={() => setIsEditOpen(false)}
+                            />
+                          )}
+
                           
                           <div className="flex flex-wrap gap-2">
-                            {(["active", "on-leave", "busy"] as DoctorStatus[]).map((status) => {
+                            {(["Active", "On Leave", "Inactive"] as DoctorStatus[]).map((status) => {
                               const config = getStatusConfig(status);
                               const Icon = config.icon;
                               const isActive = currentStatus === status;

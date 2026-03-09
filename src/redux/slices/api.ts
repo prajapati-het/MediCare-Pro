@@ -16,6 +16,7 @@ import {
   FacilityResponseType,
   ProblemType,
   AddProblemPayload,
+  UpdateDoctorRequest,
 } from "@/types/type";
 import { AddAppointmentPayload } from "@/pages/BookAppointment";
 
@@ -124,6 +125,31 @@ export const api = createApi({
       providesTags: ["Doctor"],
     }),
 
+
+    updateDoctor: builder.mutation<DoctorType, UpdateDoctorRequest>({
+      query: ({ DoctorCode, data }) => ({
+        url: `/doctor/${DoctorCode}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { DoctorCode }) => [{ type: 'Doctor', DoctorCode }],
+    }),
+
+
+    updateDoctorStatus: builder.mutation<
+      DoctorType,
+      { DoctorCode: string; status: string }
+    >({
+      query: ({ DoctorCode, status }) => ({
+        url: `/doctor/${DoctorCode}/status`,
+        method: "PUT",
+        body: { status },
+      }),
+      invalidatesTags: (_r, _e, { DoctorCode }) => [
+        { type: "Doctor", id: DoctorCode },
+      ],
+    }),
+
     /* ===================== APPOINTMENTS ===================== */
 
     getAppointments: builder.query<Appointment[], void>({
@@ -191,12 +217,12 @@ export const api = createApi({
 
     rescheduleAppointment: builder.mutation<
       any,
-      { id: string; date: string; time: string }
+      { id: string; date: string; time: string; status: string }
     >({
-      query: ({ id, date, time }) => ({
+      query: ({ id, date, time, status }) => ({
         url: `/appointments/${id}`,
         method: "PUT",
-        body: { date, time },
+        body: { date, time, status },
       }),
       invalidatesTags: ["Appointment"],
     }),
@@ -343,6 +369,8 @@ export const {
   useGetDoctorsByHospitalQuery,
   useAddDoctorMutation,
   useGetDoctorsQuery,
+  useUpdateDoctorMutation,
+  useUpdateDoctorStatusMutation,
 
 
   useGetAppointmentsQuery,

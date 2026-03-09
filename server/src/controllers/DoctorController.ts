@@ -4,6 +4,22 @@ import { Patient } from "../models/Patient.js";
 import { Doctor } from "../models/Doctor.js";
 import { Hospital } from "../models/Hospital.js";
 
+const EDITABLE_FIELDS = [
+  'username',
+  'email',
+  'phone',
+  'hospital',
+  'speciality',
+  'experience',
+  'consultationFee',
+  'education',
+  'licenseNumber',
+  'availableDays',
+  'nextAvailable',
+] as const;
+
+type EditableField = (typeof EDITABLE_FIELDS)[number];
+
 export const getDoctorPatients = async (req: Request, res: Response) => {
   try {
     const rawId = req.params.doctorId;
@@ -104,6 +120,7 @@ export const addDoctor = async (req: Request, res: Response) => {
     } = req.body;
 
     const existing = await Doctor.findOne({ email });
+    
     if (existing) {
       return res.status(400).json({
         message: "Doctor already exists with this email",
@@ -175,5 +192,98 @@ export const getDoctors = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("getDoctors error:", error);
     return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+export const updateDoctor = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { DoctorCode } = req.params;
+
+    const updatePayload: Partial<Record<EditableField, unknown>> = {};
+
+    for (const field of EDITABLE_FIELDS) {
+      if (req.body[field] !== undefined) {
+        updatePayload[field] = req.body[field];
+      }
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
+      res.status(400).json({ message: "No valid fields provided for update" });
+      return;
+    }
+
+    console.log(DoctorCode, updatePayload)
+
+    const updatedDoctor = await Doctor.findOneAndUpdate(
+      { doctorCode: Number(DoctorCode) }, // ✅ use custom id field
+      { $set: updatePayload },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedDoctor) {
+      res.status(404).json({ message: "Doctor not found" });
+      return;
+    }
+
+    res.status(200).json(updatedDoctor);
+
+  } catch (error: unknown) {
+    console.error("[updateDoctor]", error);
+
+    if (error instanceof Error && error.name === "ValidationError") {
+      res.status(400).json({ message: error.message });
+      return;
+    }
+
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code: number }).code === 11000
+    ) {
+      res.status(409).json({ message: "Duplicate value for a unique field" });
+      return;
+    }
+
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+export const updateDoctorStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { DoctorCode } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      res.status(400).json({ message: "Status is required" });
+      return;
+    }
+
+    const updatedDoctor = await Doctor.findOneAndUpdate(
+      { doctorCode: Number(DoctorCode) },
+      { $set: { status } },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    
+
+    if (!updatedDoctor) {
+      res.status(404).json({ message: "Doctor not found" });
+      return;
+    }
+
+    res.status(200).json(updatedDoctor);
+
+  } catch (error) {
+    console.error("[updateDoctorStatus]", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };

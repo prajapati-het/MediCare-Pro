@@ -301,3 +301,24 @@ export interface AddProblemPayload {
   description: string;
   category: "Equipment" | "Staffing" | "Supply" | "Infrastructure" | "Patient Care" | "Other";
 }
+
+
+export interface UpdateDoctorRequest {
+  DoctorCode: string;
+  data: Partial<
+    Pick<
+      DoctorType,
+      | 'username'
+      | 'email'
+      | 'phone'
+      | 'hospital'
+      | 'speciality'
+      | 'experience'
+      | 'consultationFee'
+      | 'education'
+      | 'licenseNumber'
+      | 'availableDays'
+      | 'nextAvailable'
+    >
+  >;
+}

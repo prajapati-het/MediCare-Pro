@@ -219,7 +219,12 @@ export const updateAppointment = async (req: Request, res: Response) => {
 
     const updated = await Appointment.findByIdAndUpdate(
       id,
-      { $set: req.body },
+      {
+        $set: {
+          ...req.body,
+          status: "Confirmed",
+        },
+      },
       { new: true }
     );
 

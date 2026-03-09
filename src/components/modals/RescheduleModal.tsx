@@ -38,9 +38,10 @@ export default function RescheduleAppointmentModal({
 
     try {
       await rescheduleAppointment({
-        id: appointment._id, // ⚠ use Mongo _id
+        id: appointment._id,
         date,
         time,
+        status: "Confirmed",
       }).unwrap();
 
       onClose();
