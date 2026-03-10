@@ -10,9 +10,6 @@ dotenv.config();
 
 const googleClient = new OAuth2Client(process.env.VITE_CLIENT_ID!);
 
-// --------------------------------------------------
-// helper → stable providerId for email-password users
-// --------------------------------------------------
 const emailProviderId = (email: string) =>
   crypto.createHash("sha256").update(email).digest("hex");
 

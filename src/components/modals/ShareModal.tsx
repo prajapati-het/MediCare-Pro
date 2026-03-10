@@ -133,6 +133,7 @@ export default function ShareModal({ open, onClose, patientName = "Patient", pat
                 Share Report
               </DialogTitle>
               <button
+                title="Close"
                 onClick={onClose}
                 className="text-slate-400 hover:text-white transition-colors rounded-lg p-1"
               >

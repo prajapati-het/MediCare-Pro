@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
 import { IntroLoader } from '@/components/IntroLoader';
 import { HospitalSlideshow } from '@/components/HospitalSlideshow';
-import { useAuth } from '@/contexts/AuthContext';
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import { logout as logoutAction } from "@/redux/slices/appSlice";

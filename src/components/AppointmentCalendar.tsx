@@ -55,7 +55,7 @@ useEffect(() => {
 
     if (
       now > apptDateTime &&
-      ["Pending", "Confirmed"].includes(apt.status)
+      ["Pending", "Confirmed", "Rescheduled"].includes(apt.status)
     ) {
       updateAppointmentStatus({
         id: String(apt.id),
@@ -77,7 +77,7 @@ const getEffectiveStatus = useCallback((apt: Appointment) => {
 const isVisibleOnCalendar = useCallback(
   (apt: Appointment) => {
     const status = getEffectiveStatus(apt);
-    return ["Pending", "Confirmed", "Delayed"].includes(status);
+    return ["Pending", "Confirmed", "Delayed", "Rescheduled"].includes(status);
   },
   [getEffectiveStatus]
 );
@@ -125,6 +125,8 @@ const days = useMemo(
         return "bg-red-500";
       case "Completed":
         return "bg-slate-500";
+      case "Rescheduled":
+        return "bg-blue-400"
       default:
         return "bg-muted";
     }

@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
-import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +17,6 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getFacilitiesByHospitalName } from '@/data/facilitiesData';
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import { logout as logoutAction } from "@/redux/slices/appSlice";

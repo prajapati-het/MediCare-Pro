@@ -140,6 +140,7 @@ export function HospitalSlideshow() {
       <div className="absolute bottom-4 right-4 md:right-10 flex gap-2">
         {hospitals.map((_, index) => (
           <button
+            title='Slideshow'
             key={index}
             onClick={() => setCurrentIndex(index)}
             className={`w-2 h-2 rounded-full transition-all duration-300 ${

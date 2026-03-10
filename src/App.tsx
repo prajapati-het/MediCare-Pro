@@ -4,10 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { HospitalsProvider } from "@/contexts/HospitalsContext";
-import { DoctorsProvider } from "@/contexts/DoctorsContext";
-import { StaffProvider } from "@/contexts/StaffContext";
 import { ProtectedRoute, PublicRoute } from "@/components/ProtectedRoute";
 import { Loader2 } from "lucide-react";
 import { Provider } from "react-redux";
@@ -17,9 +13,6 @@ import { PersistGate } from "redux-persist/integration/react";
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Hospitals = lazy(() => import("./pages/Hospitals"));
-const AddHospital = lazy(() => import("./pages/AddHospital"));
-const HospitalDetail = lazy(() => import("./pages/HospitalDetail"));
 const Doctors = lazy(() => import("./pages/Doctors"));
 const AddDoctor = lazy(() => import("./pages/AddDoctor"));
 const DoctorDetail = lazy(() => import("./pages/DoctorDetail"));
@@ -36,8 +29,6 @@ const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 
 
 
-const AdminDoctors = lazy(() => import("./pages/admin/AdminDoctors"));
-const AdminStaff = lazy(() => import("./pages/admin/AdminStaff"));
 const AdminFacilities = lazy(() => import("./pages/admin/AdminFacilities"));
 const AdminProblems = lazy(() => import("./pages/admin/AdminProblems"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
@@ -47,19 +38,16 @@ const DoctorAppointments = lazy(
 );
 const DoctorPatients = lazy(() => import("./pages/doctor/DoctorPatients"));
 const DoctorProfile = lazy(() => import("./pages/doctor/DoctorProfile"));
-const AppointmentDetail = lazy(() => import("./pages/doctor/AppointmentDetail"));
 const PatientDetail = lazy(() => import("./pages/doctor/PatientDetails/PatientDetail"));
 const PatientBillsTimeline  = lazy(() => import("./pages/doctor/PatientDetails/bill/PatientBillsTimeline"));
 
-const EditDoctor = lazy(() => import("./pages/EditDoctor"));
-const EditStaff = lazy(() => import("./pages/EditStaff"));
-const EditHospital = lazy(() => import("./pages/EditHospital"));
+const EditDoctor = lazy(() => import("./pages/EditDoctorDialog"));
+const EditStaffDialog = lazy(() => import("./pages/EditStaffDialog"));
 
 const PrintReportPage = lazy(() => import("./components/modals/PrintableReportPage"));
 
 const PatientBill = lazy(() => import("./pages/doctor/PatientDetails/bill/PatientBill"));
 
-const DoctorAppointmentsView = lazy(() => import("./pages/doctor/DoctorAppointmentsView"));
 
 const TodayPatientsPage = lazy(()=> import("./components/TodayPatientsPage"));
 
@@ -80,9 +68,6 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <Provider store={store}>
       <PersistGate loading={<PageLoader />} persistor={persistor}>
-        <HospitalsProvider>
-          <DoctorsProvider>
-            <StaffProvider>
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
@@ -135,14 +120,6 @@ const App = () => (
 
                       {/* Admin Routes */}
                       <Route
-                        path="/admin/doctors"
-                        element={
-                          <ProtectedRoute allowedRoles={["admin"]}>
-                            <AdminDoctors />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
                         path="/admin/doctors/add"
                         element={
                           <ProtectedRoute allowedRoles={["admin"]}>
@@ -158,23 +135,7 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
-                      <Route
-                        path="/admin/doctors/:id/edit"
-                        element={
-                          <ProtectedRoute allowedRoles={["admin"]}>
-                            <EditDoctor />
-                          </ProtectedRoute>
-                        }
-                      />
 
-                      <Route
-                        path="/admin/staff"
-                        element={
-                          <ProtectedRoute allowedRoles={["admin"]}>
-                            <AdminStaff />
-                          </ProtectedRoute>
-                        }
-                      />
                       <Route
                         path="/admin/staff/add"
                         element={
@@ -191,11 +152,12 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
+                      
                       <Route
                         path="/admin/staff/:id/edit"
                         element={
                           <ProtectedRoute allowedRoles={["admin"]}>
-                            <EditStaff />
+                            <EditStaffDialog />
                           </ProtectedRoute>
                         }
                       />
@@ -236,15 +198,7 @@ const App = () => (
                         }
                       />
 
-                      {/* Filtered appointments view (must come before :id route) */}
-                      <Route 
-                        path="/doctor/appointments/:filter" 
-                        element={
-                          <ProtectedRoute allowedRoles={["doctor"]}>
-                            <DoctorAppointmentsView />
-                          </ProtectedRoute>
-                        } 
-                      />
+
 
                       {/* Other doctor routes */}
                       <Route
@@ -283,39 +237,6 @@ const App = () => (
                       
 
                       {/* Legacy */}
-                      <Route
-                        path="/hospitals"
-                        element={
-                          <ProtectedRoute allowedRoles={["admin"]}>
-                            <Hospitals />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/hospitals/add"
-                        element={
-                          <ProtectedRoute allowedRoles={["admin"]}>
-                            <AddHospital />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/hospitals/:id"
-                        element={
-                          <ProtectedRoute allowedRoles={["admin"]}>
-                            <HospitalDetail />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/hospitals/:id/edit"
-                        element={
-                          <ProtectedRoute allowedRoles={["admin"]}>
-                            <EditHospital />
-                          </ProtectedRoute>
-                        }
-                      />
-
                       <Route
                         path="/doctors"
                         element={
@@ -413,9 +334,6 @@ const App = () => (
                   </Suspense>
                 </BrowserRouter>
               </TooltipProvider>
-            </StaffProvider>
-          </DoctorsProvider>
-        </HospitalsProvider>
       </PersistGate>
     </Provider>
   </QueryClientProvider>

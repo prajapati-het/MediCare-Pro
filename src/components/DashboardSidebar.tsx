@@ -36,7 +36,7 @@ interface SidebarItem {
 const adminMenuItems: SidebarItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Stethoscope, label: "Doctors", path: "/doctors", roles: ["admin"] },
-  { icon: Users, label: "Staff", path: "/admin/staff", roles: ["admin"] },
+  { icon: Users, label: "Staff", path: "/staff", roles: ["admin"] },
   { icon: Bed, label: "Facilities", path: "/admin/facilities", roles: ["admin"] },
   { icon: AlertCircle, label: "Problems", path: "/admin/problems", roles: ["admin"] },
 ];
@@ -48,14 +48,9 @@ const doctorMenuItems: SidebarItem[] = [
   { icon: User, label: "My Profile", path: "/doctor/profile", roles: ["doctor"] },
 ];
 
-const analyticsItems: SidebarItem[] = [
-  { icon: BarChart3, label: "Analytics", path: "/analytics", roles: ["admin"] },
-  { icon: FileText, label: "Reports", path: "/reports", roles: ["admin"] },
-];
 
 const systemItems: SidebarItem[] = [
   { icon: Settings, label: "Settings", path: "/admin/settings", roles: ["admin"] },
-  { icon: HelpCircle, label: "Help & Support", path: "/help" },
 ];
 
 export function DashboardSidebar() {
@@ -137,24 +132,6 @@ export function DashboardSidebar() {
           ))}
         </div>
 
-        {/* Analytics */}
-        {user?.role === "admin" && (
-          <div className="space-y-1">
-            {!isCollapsed && (
-              <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Analytics
-              </p>
-            )}
-            {filterByRole(analyticsItems).map((item) => (
-              <SidebarLink
-                key={item.path}
-                item={item}
-                isActive={location.pathname === item.path}
-                isCollapsed={isCollapsed}
-              />
-            ))}
-          </div>
-        )}
 
         {/* System */}
         <div className="space-y-1">

@@ -136,16 +136,6 @@ export default function DoctorDetail() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-3">
-                <Button variant="outline" className="gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Book Appointment
-                </Button>
-                <Button className="gap-2">
-                  <Edit className="w-4 h-4" />
-                  Edit Profile
-                </Button>
-              </div>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

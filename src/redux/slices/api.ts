@@ -17,6 +17,7 @@ import {
   ProblemType,
   AddProblemPayload,
   UpdateDoctorRequest,
+  AdminStatsResponse,
 } from "@/types/type";
 import { AddAppointmentPayload } from "@/pages/BookAppointment";
 
@@ -203,16 +204,20 @@ export const api = createApi({
       }),
 
       updateAppointmentStatus: builder.mutation<
-      { appointment: Appointment; patientEntry: Patient }, // response type
-      { id: string; status: string } // request body
-    >({
-      query: ({ id, status }) => ({
-        url: `/appointments/${id}/status`,
-        method: "PATCH",
-        body: { status },
+        { appointment: Appointment; patientEntry: Patient },
+        { id: string; status: string; reason?: string }   // ← reason is optional
+      >({
+        query: ({ id, status, reason }) => ({
+          url: `/appointments/${id}/status`,
+          method: "PATCH",
+          body: {
+            status,
+            ...(reason ? { reason } : {}),   // only send reason when present
+          },
+        }),
+        // Invalidate relevant tags so the appointments list refreshes automatically
+        invalidatesTags: ["Appointment"],
       }),
-      invalidatesTags: ["Appointment"],
-    }),
 
 
     rescheduleAppointment: builder.mutation<
@@ -348,6 +353,9 @@ export const api = createApi({
       query: (doctorId) => `/doctor-stats/${doctorId}`,
     }),
 
+    getAdminStats: builder.query<AdminStatsResponse, string>({
+      query: (hospitalId) => `/admin-stats/${hospitalId}/stats`,
+    }),
 
     /* ===================== BILL ***************************** */
 
@@ -439,6 +447,7 @@ export const {
 
 
   useGetDoctorStatsQuery,
+  useGetAdminStatsQuery,
 
 
   useCreateBillMutation,

@@ -5,10 +5,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Printer, Share2, FileText } from "lucide-react";
-import { Patient } from "@/data/patientsData";
 import PrintableReport from "./PrintableReport";
 import ShareModal from "./ShareModal";
 import "../../print.css";
+import { Patient } from "@/types/type";
 
 interface PrintPreviewModalProps {
   open: boolean;

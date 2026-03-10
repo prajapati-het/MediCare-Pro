@@ -43,44 +43,76 @@ export const getDoctorStats = async (req: Request, res: Response) => {
 
 
     // ── 4. Weekly overview (last 7 days, oldest → newest) ────────────────────
-    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-    const weeklyStats = await Promise.all(
-      Array.from({ length: 7 }).map(async (_, i) => {
-        const day = new Date();
-        day.setDate(day.getDate() - i);
+const base = new Date();
+base.setHours(0,0,0,0);
 
-        const start = new Date(day);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(day);
-        end.setHours(23, 59, 59, 999);
+const weeklyStats = await Promise.all(
+  Array.from({ length: 7 }).map(async (_, i) => {
 
-        const [patientsCount, appointmentsCount, admissionsCount] = await Promise.all([
-          Patient.countDocuments({
-            doctorCode: doctorCode,
-            createdAt: { $gte: start, $lte: end },
-          }),
-          Appointment.countDocuments({
-            doctorCode,                                    // ← numeric code, never NaN
-            date: { $gte: start.toISOString(), $lte: end.toISOString() },
-          }),
-          Patient.countDocuments({
-            doctorCode: doctorCode,
-            admittedAt: { $gte: start, $lte: end },
-          }),
-        ]);
+    const day = new Date(base);
+    day.setDate(base.getDate() - i);
 
+    // ✅ local date string (NOT ISO)
+    const dateStr =
+      day.getFullYear() +
+      "-" +
+      String(day.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(day.getDate()).padStart(2, "0");
 
+    const [patientsCount, appointmentsCount, admissionsCount] =
+      await Promise.all([
 
+        Patient.countDocuments({
+          doctorCode: doctorCode,
+          createdAt: {
+            $gte: new Date(dateStr + "T00:00:00"),
+            $lte: new Date(dateStr + "T23:59:59"),
+          },
+        }),
 
-        return {
-          name: daysOfWeek[day.getDay()],
-          patients: patientsCount,
-          appointments: appointmentsCount,
-          admissions: admissionsCount,
-        };
-      })
+        // ✅ ONLY THIS DOCTOR
+        Appointment.countDocuments({
+  doctorCode,
+  date: dateStr,
+  status: {
+    $in: ["Pending", "Confirmed", "Delayed", "Rescheduled"],
+  },
+}),
+
+        Patient.countDocuments({
+          doctorCode: doctorCode,
+          admittedAt: {
+            $gte: new Date(dateStr + "T00:00:00"),
+            $lte: new Date(dateStr + "T23:59:59"),
+          },
+        }),
+
+      ]);
+
+    console.log(
+      "Doctor:",
+      doctorCode,
+      "Date:",
+      dateStr,
+      "Appointments:",
+      appointmentsCount
     );
+
+    return {
+      name: daysOfWeek[day.getDay()],
+      patients: patientsCount,
+      appointments: appointmentsCount,
+      admissions: admissionsCount,
+    };
+
+  })
+).then(arr => arr.reverse());
+
+    console.log(weeklyStats)
+
 
     // ── 5. Department distribution ────────────────────────────────────────────
      const statusStats = await Patient.aggregate([

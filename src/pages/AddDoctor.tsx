@@ -30,7 +30,6 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { useDoctors } from '@/contexts/DoctorsContext';
 import { z } from 'zod';
 import { useAddDoctorMutation } from '@/redux/slices/api';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';

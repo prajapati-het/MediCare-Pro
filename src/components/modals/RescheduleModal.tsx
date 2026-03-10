@@ -61,6 +61,7 @@ export default function RescheduleAppointmentModal({
         </DialogHeader>
 
         <input
+          title="Date"
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
@@ -69,6 +70,7 @@ export default function RescheduleAppointmentModal({
         />
 
         <input
+          title="Time"
           type="time"
           value={time}
           onChange={(e) => setTime(e.target.value)}

@@ -99,22 +99,6 @@ export interface signupCredentialsType {
   password: string;
 }
 
-export interface Appointment {
-  id: number;
-  doctorCode: number;
-  patientId: number;
-  patientName: string;
-  time: string;
-  date: string;
-  type?: string;
-  status: string;
-  notes?: string;
-  duration: number;
-  room: string;
-  cancelReason?: string;
-}
-
-
 export interface Facility {
   id: number;
   hospitalId: string;
@@ -233,6 +217,21 @@ export interface Hospital {
   establishedYear: number;
 }
 
+export interface Appointment {
+  id: number;
+  doctorCode: number;
+  patientId: number;
+  patientName: string;
+  time: string;
+  date: string;
+  type?: string;
+  status: string;
+  notes?: string;
+  duration: number;
+  room?: string;
+  cancelReason?: string;
+}
+
 
 export interface AppointmentWithPatientInfo extends Appointment {
   patientName: string;
@@ -322,3 +321,124 @@ export interface UpdateDoctorRequest {
     >
   >;
 }
+
+
+// Add these to your @/types/type.ts
+
+export interface WeeklyStat {
+  name: string;           // 'Mon', 'Tue', etc.
+  patients: number;
+  appointments: number;
+  admissions: number;
+}
+
+export interface StatusStat {
+  name: string;
+  value: number;
+}
+
+export interface DoctorStatusStat {
+  status: string;
+  count: number;
+}
+
+export interface UpcomingAppointmentStat {
+  patient: string;
+  time: string;
+  date: string;
+  type: string;
+  status: string;
+  room?: string;
+}
+
+// Doctor dashboard stats (from /doctor-stats/:doctorId)
+export interface DoctorStatsResponse {
+  doctorId: string;
+  doctorCode: number;
+  totalPatients: number;
+  todayAppointments: number;
+  weeklyStats: WeeklyStat[];
+  statusStats: StatusStat[];
+  upcomingAppointments: UpcomingAppointmentStat[];
+}
+
+// Admin dashboard stats (from /admin/:hospitalId/stats)
+export interface AdminStatsResponse {
+  hospitalId: string;
+  hospitalName: string;
+
+  // ── Totals ─────────────────────────────
+  totalDoctors: number;
+  totalStaff: number;
+  totalPatients: number;
+  staffOnDuty: number;
+  occupiedBeds?: number;        // New: total beds currently occupied
+  criticalPatients?: number;    // New: patients in critical condition
+
+  // ── Appointments ───────────────────────
+  todayAppointments: number;
+  upcomingAppointments: UpcomingAppointmentStat[];
+
+  // ── Weekly Stats ───────────────────────
+  weeklyStats: WeeklyStat[];   // e.g., patients, appointments, staff, beds per day
+
+  // ── Status Breakdown ───────────────────
+  statusStats: StatusStat[];           // Patient status percentages
+  doctorStatusStats: DoctorStatusStat[]; // Doctor availability / status breakdown
+
+  // ── Department / Doctor Breakdown ─────
+  departmentStats?: DepartmentStat[];   // Optional: per-department stats
+}
+
+// ── Supporting types ─────────────────────
+export interface WeeklyStat {
+  name: string;          // e.g., 'Mon', 'Tue', etc.
+  patients: number;
+  appointments: number;
+  staffOnDuty?: number;      // Optional
+  occupiedBeds?: number;     // Optional
+}
+
+export interface StatusStat {
+  name: string;       // e.g., 'admitted', 'discharged'
+  value: number;
+}
+
+export interface DoctorStatusStat {
+  status: string;     // e.g., 'active', 'on-duty', 'off-duty'
+  count: number;
+}
+
+export interface UpcomingAppointmentStat {
+  patient: string;
+  doctor: string;
+  department: string;
+  date: string;
+  time: string;
+  type: string;
+  room?: string;
+}
+
+export interface DepartmentStat {
+  department: string;
+  doctors: number;
+  patients: number;
+  appointmentsToday: number;
+  occupiedBeds: number;
+}
+
+
+// Appointments data mapped to specific doctors
+export type AppointmentStatus =
+  | "Confirmed"
+  | "Pending"
+  | "Completed"
+  | "Cancelled"
+  | "Delayed"
+  | "Rescheduled"
+  | "No Show";
+
+
+
+
+export type BadgeVariant = 'default' | 'destructive' | 'secondary' | 'outline';

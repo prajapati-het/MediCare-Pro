@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Appointment, IAppointment } from "../models/Appointment.js";
 import { Patient } from "../models/Patient.js";
 import { Doctor } from "../models/Doctor.js";
+import { QueryFilter } from "mongoose";
 
 // -------------------- Get appointments for a specific day --------------------
 export const getTodayAppointments = async (req: Request, res: Response) => {
@@ -172,45 +173,47 @@ export const addAppointment = async (req: Request, res: Response) => {
 export const updateAppointmentStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, reason } = req.body as { status: string; reason?: string };
 
-    // 1. Update appointment
-    const appointment = await Appointment.findOneAndUpdate(
-      { id: Number(id) },
-      { status },
-      { returnDocument: "after" }
-    );
+    // 1️⃣ Build appointment update
+    const filter: QueryFilter<IAppointment> = { id: Number(id) };
+    const updateData: Partial<IAppointment> = { status };
+
+    if (status.toLowerCase() === "cancelled" && reason) {
+      updateData.cancelReason = reason;
+    }
+
+    // 2️⃣ Update appointment
+    const appointment = await Appointment.findOneAndUpdate(filter, updateData, {
+      returnDocument: "after",
+    });
 
     if (!appointment) return res.status(404).json({ message: "Appointment not found" });
 
-    const doctor = await Doctor.findOne({
-      doctorCode: appointment.doctorCode
-    });
+    // 3️⃣ Find doctor
+    const doctor = await Doctor.findOne({ doctorCode: appointment.doctorCode });
+    if (!doctor) throw new Error("Doctor not found");
 
-    if (!doctor) {
-      throw new Error("Doctor not found");
-    }
-
-    // 2. Add entry to Patient table
+    // 4️⃣ Update patient (always active)
     const patientEntry = await Patient.findOneAndUpdate(
       { id: appointment.patientId },
       {
-        status: "Active",
+        status: "Active",              // patient stays active
         doctorCode: appointment.doctorCode,
         name: appointment.patientName,
         lastVisit: appointment.date,
-        doctorId: doctor.id
+        doctorId: doctor.id,
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    res.status(200).json({ appointment, patientEntry });
+    // 5️⃣ Respond
+    return res.status(200).json({ appointment, patientEntry });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    console.error("[updateAppointmentStatus]", error);
+    return res.status(500).json({ message: "Server error" });
   }
 };
-
 
 
 export const updateAppointment = async (req: Request, res: Response) => {
@@ -222,7 +225,7 @@ export const updateAppointment = async (req: Request, res: Response) => {
       {
         $set: {
           ...req.body,
-          status: "Confirmed",
+          status: "Rescheduled",
         },
       },
       { new: true }
@@ -231,6 +234,27 @@ export const updateAppointment = async (req: Request, res: Response) => {
     if (!updated) {
       return res.status(404).json({ message: "Appointment not found" });
     }
+
+    const doctor = await Doctor.findOne({
+      doctorCode: updated.doctorCode
+    });
+
+    if (!doctor) {
+      throw new Error("Doctor not found");
+    }
+
+    // 2. Add entry to Patient table
+    const patientEntry = await Patient.findOneAndUpdate(
+      { id: updated.patientId },
+      {
+        status: "Active",
+        doctorCode: updated.doctorCode,
+        name: updated.patientName,
+        lastVisit: updated.date,
+        doctorId: doctor.id
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
     res.json(updated);
   } catch (err) {

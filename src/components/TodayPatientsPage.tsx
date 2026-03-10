@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { Check, X, RotateCcw, Eye, ArrowLeft, SlidersHorizontal, MoreVertical } from "lucide-react";
 import RescheduleModal from "./modals/RescheduleModal";
+import { CancelReasonModal } from "./modals/CancelReasonModal";
 
 import {
   format,
@@ -23,51 +24,51 @@ import {
   endOfWeek,
   startOfMonth,
   endOfMonth,
-  parseISO,
 } from "date-fns";
 
-import { Appointment, AppointmentStatus } from "@/data/appointmentsData";
 import { RootState } from "@/redux/store";
 import { useGetAppointmentsWithPatientInfoQuery, useUpdateAppointmentStatusMutation } from "@/redux/slices/api";
-import { AppointmentWithPatientInfo } from "@/types/type";
+import { AppointmentStatus, AppointmentWithPatientInfo } from "@/types/type";
 import { toast } from "./ui/use-toast";
 
 export default function TodayPatientsPage() {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { doctorCode, doctorEmail } = useSelector(
-  (state: RootState) => ({
-    doctorCode: state.app.doctorCode,
-    doctorEmail: state.app.doctorUser?.email,
-  }),
-  shallowEqual
-);
+    (state: RootState) => ({
+      doctorCode: state.app.doctorCode,
+      doctorEmail: state.app.doctorUser?.email,
+    }),
+    shallowEqual
+  );
 
-
-  const { data: appointments = [], isLoading } =   useGetAppointmentsWithPatientInfoQuery(doctorCode);
-
+  const { data: appointments = [], isLoading } =
+    useGetAppointmentsWithPatientInfoQuery(doctorCode);
 
   const [tagFilter, setTagFilter] = useState<string[]>([]);
-const [statusFilter, setStatusFilter] = useState<AppointmentStatus[]>([]);
-const [showRescheduleModal, setShowRescheduleModal] = useState(false);
-const [selectedAppointment, setSelectedAppointment] =
-  useState<AppointmentWithPatientInfo | null>(null);
-const [showFilters, setShowFilters] = useState(false);
-const [actionPopupId, setActionPopupId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<AppointmentStatus[]>([]);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<AppointmentWithPatientInfo | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [actionPopupId, setActionPopupId] = useState<string | null>(null);
+  const [effectiveDate, setEffectiveDate] = useState<Date | null>(null);
 
-const [effectiveDate, setEffectiveDate] = useState<Date | null>(null);
+  // ── Cancel modal state ───────────────────────────────────────────────────────
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [appointmentToCancel, setAppointmentToCancel] =
+    useState<AppointmentWithPatientInfo | null>(null);
 
   useEffect(() => {
-  const dateParam = searchParams.get("date");
-  if (dateParam) {
-    const [y, m, d] = dateParam.split("-").map(Number);
-    setEffectiveDate(new Date(y, m - 1, d));
-  } else {
-    navigate("/doctor/appointments");
-  }
-}, [searchParams, navigate]);
+    const dateParam = searchParams.get("date");
+    if (dateParam) {
+      const [y, m, d] = dateParam.split("-").map(Number);
+      setEffectiveDate(new Date(y, m - 1, d));
+    } else {
+      navigate("/doctor/appointments");
+    }
+  }, [searchParams, navigate]);
 
   /* ---------------- FILTERS FROM URL ---------------- */
   const monthFilter = searchParams.get("month") === "1";
@@ -84,35 +85,34 @@ const [effectiveDate, setEffectiveDate] = useState<Date | null>(null);
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {
       const params = new URLSearchParams(searchParams);
-
       Object.entries(updates).forEach(([key, value]) =>
         value ? params.set(key, value) : params.delete(key)
       );
-
       setSearchParams(params);
     },
     [searchParams, setSearchParams]
   );
 
   const DAY_VIEW_ALLOWED_STATUSES = useMemo<AppointmentStatus[]>(
-    () => ["Confirmed", "Delayed", "Pending"],
+    () => ["Confirmed", "Delayed", "Pending", "Rescheduled"],
     []
   );
 
   const statusColors: Record<AppointmentStatus, string> = {
-    Confirmed: "bg-emerald-500 text-white",
-    Pending: "bg-amber-500 text-white",
-    Completed: "bg-green-600 text-white",
-    Cancelled: "bg-red-600 text-white",
-    Delayed: "bg-orange-500 text-white",
-    "No Show": "bg-gray-500 text-white",
+    Confirmed:   "bg-emerald-500 text-white",
+    Pending:     "bg-amber-500 text-white",
+    Completed:   "bg-green-600 text-white",
+    Cancelled:   "bg-red-600 text-white",
+    Delayed:     "bg-orange-500 text-white",
+    Rescheduled: "bg-blue-400 text-white",
+    "No Show":   "bg-gray-500 text-white",
   };
 
   const actionColors = {
     complete: "bg-green-500 text-white hover:bg-green-600",
-    cancel: "bg-red-500 text-white hover:bg-red-600",
+    cancel:   "bg-red-500 text-white hover:bg-red-600",
     followup: "bg-blue-500 text-white hover:bg-blue-600",
-    view: "bg-slate-200 hover:bg-slate-300",
+    view:     "bg-slate-200 hover:bg-slate-300",
   };
 
   /* ---------------- UTILS ---------------- */
@@ -125,94 +125,103 @@ const [effectiveDate, setEffectiveDate] = useState<Date | null>(null);
     a.getDate() === b.getDate();
 
   /* ---------------- FILTER LOGIC ---------------- */
+  const filteredAppointments = useMemo(() => {
+    if (!effectiveDate || !doctorCode) return [];
 
-const filteredAppointments = useMemo(() => {
-  if (!effectiveDate || !doctorCode) return [];
+    const parseDay    = (dateStr: string) => toLocalDay(new Date(dateStr));
+    const effectiveDay = toLocalDay(effectiveDate);
 
-  const parseDay = (dateStr: string) => toLocalDay(new Date(dateStr));
-  const effectiveDay = toLocalDay(effectiveDate);
+    const monthStart = startOfMonth(effectiveDay);
+    const monthEnd   = endOfMonth(effectiveDay);
+    const weekStart  = startOfWeek(effectiveDay);
+    const weekEnd    = endOfWeek(effectiveDay);
 
-  const monthStart = startOfMonth(effectiveDay);
-  const monthEnd = endOfMonth(effectiveDay);
-  const weekStart = startOfWeek(effectiveDay);
-  const weekEnd = endOfWeek(effectiveDay);
+    const rangeStart = searchParams.get("start")
+      ? parseDay(searchParams.get("start")!)
+      : null;
+    const rangeEnd = searchParams.get("end")
+      ? parseDay(searchParams.get("end")!)
+      : null;
 
-  const rangeStart = searchParams.get("start") ? parseDay(searchParams.get("start")!) : null;
-  const rangeEnd = searchParams.get("end") ? parseDay(searchParams.get("end")!) : null;
+    const searchNameLower = (searchParams.get("search") || "").toLowerCase();
+    const isMonthFilter   = searchParams.get("month") === "1";
+    const isWeekFilter    = searchParams.get("week") === "1";
 
-  const searchName = (searchParams.get("search") || "").toLowerCase();
-  const monthFilter = searchParams.get("month") === "1";
-  const weekFilter = searchParams.get("week") === "1";
+    return appointments.filter((apt) => {
+      if (apt.doctorCode !== Number(doctorCode)) return false;
 
-  return appointments.filter((apt) => {
-    if (apt.doctorCode !== Number(doctorCode)) return false;
+      const aptDay = parseDay(apt.date);
 
-    const aptDay = parseDay(apt.date);
+      if (rangeStart && rangeEnd) {
+        if (aptDay < rangeStart || aptDay > rangeEnd) return false;
+      } else if (isWeekFilter) {
+        if (aptDay < weekStart || aptDay > weekEnd) return false;
+      } else if (isMonthFilter || tagFilter.length > 0) {
+        if (aptDay < monthStart || aptDay > monthEnd) return false;
+      } else {
+        if (!isSameLocalDay(aptDay, effectiveDay)) return false;
+        if (!DAY_VIEW_ALLOWED_STATUSES.includes(apt.status as AppointmentStatus)) return false;
+      }
 
-    // ---- DATE FILTER PRIORITY ----
-    if (rangeStart && rangeEnd) {
-      if (aptDay < rangeStart || aptDay > rangeEnd) return false;
-    } else if (weekFilter) {
-      if (aptDay < weekStart || aptDay > weekEnd) return false;
-    } else if (monthFilter || tagFilter.length > 0) {
-      if (aptDay < monthStart || aptDay > monthEnd) return false;
-    } else {
-      if (!isSameLocalDay(aptDay, effectiveDay)) return false;
-      if (!DAY_VIEW_ALLOWED_STATUSES.includes(apt.status as AppointmentStatus)) return false;
-    }
+      if (searchNameLower && !apt.patientName.toLowerCase().includes(searchNameLower)) return false;
+      if (tagFilter.length && !tagFilter.includes(apt.tag ?? "_")) return false;
+      if (statusFilter.length && !statusFilter.includes(apt.status as AppointmentStatus)) return false;
 
-    // ---- SEARCH ----
-    if (searchName && !apt.patientName.toLowerCase().includes(searchName)) return false;
-
-    // ---- TAG ----
-    if (tagFilter.length && !tagFilter.includes(apt.tag ?? "_")) return false;
-
-    // ---- STATUS ----
-    if (statusFilter.length && !statusFilter.includes(apt.status as AppointmentStatus)) return false;
-
-    return true;
-  });
-}, [effectiveDate, doctorCode, searchParams, appointments, tagFilter, statusFilter, DAY_VIEW_ALLOWED_STATUSES]);
-
-
-console.log(filteredAppointments)
-
-  const getWeekOfMonth = (date: Date) => {
-    const startWeek = startOfWeek(startOfMonth(date));
-    const currentWeek = startOfWeek(date);
-    return (
-      Math.floor(
-        (currentWeek.getTime() - startWeek.getTime()) / (7 * 24 * 60 * 60 * 1000)
-      ) + 1
-    );
-  };
+      return true;
+    });
+  }, [effectiveDate, doctorCode, searchParams, appointments, tagFilter, statusFilter, DAY_VIEW_ALLOWED_STATUSES]);
 
   const pageTitle = useMemo(() => {
-  if (!effectiveDate) return "";
+    if (!effectiveDate) return "";
 
-  const monthFilter = searchParams.get("month") === "1";
-  const weekFilter = searchParams.get("week") === "1";
+    const isMonthFilter = searchParams.get("month") === "1";
+    const isWeekFilter  = searchParams.get("week") === "1";
 
-  const getWeekOfMonth = (date: Date) => {
-    const startWeek = startOfWeek(startOfMonth(date));
-    const currentWeek = startOfWeek(date);
-    return Math.floor(
-      (currentWeek.getTime() - startWeek.getTime()) / (7 * 24 * 60 * 60 * 1000)
-    ) + 1;
+    const getWeekOfMonth = (date: Date) => {
+      const startWeek   = startOfWeek(startOfMonth(date));
+      const currentWeek = startOfWeek(date);
+      return (
+        Math.floor(
+          (currentWeek.getTime() - startWeek.getTime()) / (7 * 24 * 60 * 60 * 1000)
+        ) + 1
+      );
+    };
+
+    if (isMonthFilter) return `Patients for ${format(effectiveDate, "MMMM yyyy")}`;
+    if (isWeekFilter) {
+      const week = getWeekOfMonth(effectiveDate);
+      return `Patients for week ${week} of ${format(effectiveDate, "MMMM yyyy")}`;
+    }
+    return `Patients for ${format(effectiveDate, "EEEE, MMM d yyyy")}`;
+  }, [effectiveDate, searchParams]);
+
+  const [updateStatus] = useUpdateAppointmentStatusMutation();
+
+  // ── Cancel handler — opens modal instead of calling API directly ─────────────
+  const handleCancelClick = (apt: AppointmentWithPatientInfo) => {
+    setAppointmentToCancel(apt);
+    setActionPopupId(null);   // close the action popup
+    setCancelModalOpen(true);
   };
 
-  if (monthFilter) return `Patients for ${format(effectiveDate, "MMMM yyyy")}`;
-  if (weekFilter) {
-    const week = getWeekOfMonth(effectiveDate);
-    return `Patients for week ${week} of ${format(effectiveDate, "MMMM yyyy")}`;
-  }
-
-  return `Patients for ${format(effectiveDate, "EEEE, MMM d yyyy")}`;
-}, [effectiveDate, searchParams]);
-
-
-const [updateStatus] = useUpdateAppointmentStatusMutation();
-
+  // ── Called by CancelReasonModal on confirm ────────────────────────────────────
+  const handleCancelConfirm = async (reason: string) => {
+    if (!appointmentToCancel) return;
+    try {
+      await updateStatus({
+        id:     String(appointmentToCancel.id),
+        status: "Cancelled",
+        reason,
+      }).unwrap();
+      toast({ title: "Appointment cancelled" });
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Error cancelling appointment", variant: "destructive" });
+    } finally {
+      setCancelModalOpen(false);
+      setAppointmentToCancel(null);
+    }
+  };
 
   /* ---------------- UI ---------------- */
   return (
@@ -226,7 +235,7 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
         {/* HEADER */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
-            <motion.div 
+            <motion.div
               className="flex items-center gap-4"
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -244,7 +253,7 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                 {pageTitle}
               </h1>
             </motion.div>
-            
+
             {/* FILTER TOGGLE BUTTON */}
             <motion.div
               initial={{ x: 20, opacity: 0 }}
@@ -292,17 +301,15 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                   transition={{ delay: 0.1 }}
                   className="bg-white/80 backdrop-blur-lg border border-slate-200 rounded-2xl p-6 shadow-xl"
                 >
-                  {/* Two Column Layout */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Left Column */}
                     <div className="space-y-6">
-                      {/* Date Range Filters */}
                       <motion.div
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: 0.15 }}
                       >
-                        <label className="text-sm font-semibold text-slate-700 mb-3 block flex items-center gap-2">
+                        <label className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                           <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
                           Date Range
                         </label>
@@ -310,31 +317,19 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                           <Button
                             size="sm"
                             variant={monthFilter ? "default" : "outline"}
-                            onClick={() =>
-                              updateParams({
-                                month: monthFilter ? null : "1",
-                                week: null,
-                              })
-                            }
+                            onClick={() => updateParams({ month: monthFilter ? null : "1", week: null })}
                             className="transition-all duration-200 hover:scale-105"
                           >
                             Month
                           </Button>
-
                           <Button
                             size="sm"
                             variant={weekFilter ? "default" : "outline"}
-                            onClick={() =>
-                              updateParams({
-                                week: weekFilter ? null : "1",
-                                month: null,
-                              })
-                            }
+                            onClick={() => updateParams({ week: weekFilter ? null : "1", month: null })}
                             className="transition-all duration-200 hover:scale-105"
                           >
                             Week
                           </Button>
-
                           <input
                             type="date"
                             title="Select start date"
@@ -342,7 +337,6 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                             value={rangeFilter.start}
                             onChange={(e) => updateParams({ start: e.target.value || null })}
                           />
-
                           <input
                             type="date"
                             title="Select end date"
@@ -353,13 +347,12 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                         </div>
                       </motion.div>
 
-                      {/* Search Filter */}
                       <motion.div
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: 0.2 }}
                       >
-                        <label className="text-sm font-semibold text-slate-700 mb-3 block flex items-center gap-2">
+                        <label className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                           <span className="w-1 h-4 bg-green-500 rounded-full"></span>
                           Search Patient
                         </label>
@@ -371,24 +364,21 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                           onChange={(e) => updateParams({ search: e.target.value || null })}
                         />
                       </motion.div>
-
-                      
                     </div>
 
                     {/* Right Column */}
                     <div className="space-y-6">
-                      {/* Status Filters */}
                       <motion.div
                         initial={{ x: 20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: 0.15 }}
                       >
-                        <label className="text-sm font-semibold text-slate-700 mb-3 block flex items-center gap-2">
+                        <label className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                           <span className="w-1 h-4 bg-purple-500 rounded-full"></span>
                           Status
                         </label>
                         <div className="flex flex-wrap gap-2">
-                          {(["Confirmed", "Pending", "Completed", "Cancelled", "Delayed", "No Show"] as AppointmentStatus[]).map((status, idx) => (
+                          {(["Confirmed", "Pending", "Completed", "Cancelled", "Delayed", "No Show", "Rescheduled"] as AppointmentStatus[]).map((status, idx) => (
                             <motion.div
                               key={status}
                               initial={{ scale: 0, opacity: 0 }}
@@ -399,13 +389,10 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                                 size="sm"
                                 variant={statusFilter.includes(status) ? "default" : "outline"}
                                 onClick={() => {
-                                  const newFilter = [...statusFilter];
-                                  if (newFilter.includes(status)) {
-                                    newFilter.splice(newFilter.indexOf(status), 1);
-                                  } else {
-                                    newFilter.push(status);
-                                  }
-                                  setStatusFilter(newFilter);
+                                  const next = [...statusFilter];
+                                  if (next.includes(status)) next.splice(next.indexOf(status), 1);
+                                  else next.push(status);
+                                  setStatusFilter(next);
                                 }}
                                 className="transition-all duration-200 hover:scale-105 shadow-sm"
                               >
@@ -417,13 +404,12 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                         </div>
                       </motion.div>
 
-                      {/* Tag Filters */}
                       <motion.div
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: 0.25 }}
                       >
-                        <label className="text-sm font-semibold text-slate-700 mb-3 block flex items-center gap-2">
+                        <label className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                           <span className="w-1 h-4 bg-orange-500 rounded-full"></span>
                           Condition Tags
                         </label>
@@ -439,13 +425,10 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                                 size="sm"
                                 variant={tagFilter.includes(tag) ? "default" : "outline"}
                                 onClick={() => {
-                                  const newFilter = [...tagFilter];
-                                  if (newFilter.includes(tag)) {
-                                    newFilter.splice(newFilter.indexOf(tag), 1);
-                                  } else {
-                                    newFilter.push(tag);
-                                  }
-                                  setTagFilter(newFilter);
+                                  const next = [...tagFilter];
+                                  if (next.includes(tag)) next.splice(next.indexOf(tag), 1);
+                                  else next.push(tag);
+                                  setTagFilter(next);
                                 }}
                                 className="transition-all duration-200 hover:scale-105 shadow-sm capitalize"
                               >
@@ -458,7 +441,6 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                     </div>
                   </div>
 
-                  {/* Clear All Filters - Full Width */}
                   {(tagFilter.length > 0 || statusFilter.length > 0 || searchName || monthFilter || weekFilter || rangeFilter.start || rangeFilter.end) && (
                     <motion.div
                       initial={{ opacity: 0 }}
@@ -472,13 +454,7 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                         onClick={() => {
                           setTagFilter([]);
                           setStatusFilter([]);
-                          updateParams({ 
-                            search: null, 
-                            month: null, 
-                            week: null, 
-                            start: null, 
-                            end: null 
-                          });
+                          updateParams({ search: null, month: null, week: null, start: null, end: null });
                         }}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200"
                       >
@@ -493,7 +469,7 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
         </div>
 
         {/* TABLE */}
-        <motion.div 
+        <motion.div
           className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-slate-200"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -518,10 +494,8 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                 </TableRow>
               </TableHeader>
 
-
               <TableBody>
                 {filteredAppointments.map((apt, idx) => (
-                  
                   <motion.tr
                     key={apt.id}
                     initial={{ opacity: 0, x: -20 }}
@@ -535,82 +509,60 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                         className={`${actionColors.view} transition-all duration-200 hover:scale-110 shadow-md`}
                         onClick={() =>
                           navigate(
-                            `/doctor/patients/${apt.patientId}?fromCalendar=1&date=${effectiveDate.toISOString()}`
+                            `/doctor/patients/${apt.patientId}?fromCalendar=1&date=${effectiveDate!.toISOString()}`
                           )
                         }
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
                     </TableCell>
-                    <TableCell className="font-medium text-slate-900">
-                      {apt.patientName}
-                    </TableCell>
-
-                    {/* Condition Column (tag) */}
+                    <TableCell className="font-medium text-slate-900">{apt.patientName}</TableCell>
                     <TableCell>
                       <Badge
                         className={`${
-                          apt.tag === "critical"
-                            ? "bg-red-500 text-white shadow-red-200"
-                            : apt.tag === "follow-up"
-                            ? "bg-orange-500 text-white shadow-orange-200"
-                            : apt.tag === "normal"
-                            ? "bg-green-500 text-white shadow-green-200"
-                            : apt.tag === "new"
-                            ? "bg-blue-500 text-white shadow-blue-200"
-                            : "bg-gray-500 text-white shadow-gray-200"
+                          apt.tag === "critical"  ? "bg-red-500 text-white shadow-red-200"
+                          : apt.tag === "follow-up" ? "bg-orange-500 text-white shadow-orange-200"
+                          : apt.tag === "normal"    ? "bg-green-500 text-white shadow-green-200"
+                          : apt.tag === "new"       ? "bg-blue-500 text-white shadow-blue-200"
+                          : "bg-gray-500 text-white shadow-gray-200"
                         } shadow-md transition-all duration-200 hover:scale-110`}
                       >
                         {apt.tag}
                       </Badge>
                     </TableCell>
-
-                    {/* Problem Column */}
                     <TableCell className="text-slate-700">{apt.condition}</TableCell>
-
                     <TableCell className="text-slate-700">{apt.age}</TableCell>
                     <TableCell className="text-slate-700">{apt.height}</TableCell>
                     <TableCell className="text-slate-700">{apt.weight}</TableCell>
                     <TableCell className="whitespace-nowrap">
-                      <a
-                        href={`tel:${apt.contact}`}
-                        className="text-black-600 hover:text-blue-700 hover:underline transition-all duration-200"
-                      >
+                      <a href={`tel:${apt.contact}`} className="text-black-600 hover:text-blue-700 hover:underline transition-all duration-200">
                         {apt.contact}
                       </a>
                     </TableCell>
-
                     <TableCell>
-                      <a
-                        href={`mailto:${apt.email}?from=${doctorEmail}`}
-                        className="text-black-600 hover:text-blue-700 hover:underline transition-all duration-200"
-                      >
+                      <a href={`mailto:${apt.email}?from=${doctorEmail}`} className="text-black-600 hover:text-blue-700 hover:underline transition-all duration-200">
                         {apt.email}
                       </a>
                     </TableCell>
-
                     <TableCell>
-                      <Badge className={`${statusColors[apt.status]} shadow-md transition-all duration-200 hover:scale-110`}>
+                      <Badge className={`${statusColors[apt.status as AppointmentStatus]} shadow-md transition-all duration-200 hover:scale-110`}>
                         {apt.status}
                       </Badge>
                     </TableCell>
-                    
-                    <TableCell className="text-slate-700 ">{apt.time}</TableCell>
-                    
-
+                    <TableCell className="text-slate-700">{apt.time}</TableCell>
                     <TableCell className="text-center">
                       <Button
                         size="icon"
                         variant="outline"
                         data-action-button={apt.id}
                         className="transition-all duration-200 hover:scale-110 shadow-md hover:bg-slate-100"
-                        onClick={() => setActionPopupId(actionPopupId === String(apt.id) ? null : String(apt.id))}
+                        onClick={() =>
+                          setActionPopupId(actionPopupId === String(apt.id) ? null : String(apt.id))
+                        }
                       >
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </TableCell>
-
-                    
                   </motion.tr>
                 ))}
               </TableBody>
@@ -619,6 +571,7 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
         </motion.div>
       </motion.div>
 
+      {/* Reschedule modal */}
       {selectedAppointment && (
         <RescheduleModal
           open={showRescheduleModal}
@@ -627,6 +580,16 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
           allAppointments={appointments}
         />
       )}
+
+      {/* ── Cancel reason modal ─────────────────────────────────────────────── */}
+      <CancelReasonModal
+        open={cancelModalOpen}
+        onClose={() => {
+          setCancelModalOpen(false);
+          setAppointmentToCancel(null);
+        }}
+        onConfirm={handleCancelConfirm}
+      />
 
       {/* Global Action Popup Portal */}
       <AnimatePresence>
@@ -641,12 +604,14 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
           >
             {filteredAppointments.map((apt) => {
               if (String(apt.id) !== actionPopupId) return null;
-              
-              const buttonElement = document.querySelector(`[data-action-button="${apt.id}"]`);
+
+              const buttonElement = document.querySelector(
+                `[data-action-button="${apt.id}"]`
+              );
               if (!buttonElement) return null;
-              
+
               const rect = buttonElement.getBoundingClientRect();
-              
+
               return (
                 <motion.div
                   key={apt.id}
@@ -655,7 +620,7 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                   exit={{ opacity: 0, scale: 0.9, x: -10 }}
                   transition={{ duration: 0.2 }}
                   style={{
-                    position: 'fixed',
+                    position: "fixed",
                     top: rect.top + rect.height / 2 - 60,
                     left: rect.right + 12,
                   }}
@@ -663,6 +628,7 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex flex-col gap-1">
+                    {/* Mark Complete */}
                     <Button
                       size="sm"
                       className={`${actionColors.complete} justify-start transition-all duration-200 hover:scale-105 shadow-sm`}
@@ -673,7 +639,7 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                           setActionPopupId(null);
                         } catch (err) {
                           console.error(err);
-                          toast({ title: "Error updating appointment" });
+                          toast({ title: "Error updating appointment", variant: "destructive" });
                         }
                       }}
                     >
@@ -681,24 +647,17 @@ const [updateStatus] = useUpdateAppointmentStatusMutation();
                       Mark Complete
                     </Button>
 
+                    {/* Cancel — opens CancelReasonModal */}
                     <Button
                       size="sm"
                       className={`${actionColors.cancel} justify-start transition-all duration-200 hover:scale-105 shadow-sm`}
-                      onClick={async () => {
-                        try {
-                          await updateStatus({ id: String(apt.id), status: "Cancelled" }).unwrap();
-                          toast({ title: "Appointment cancelled" });
-                          setActionPopupId(null);
-                        } catch (err) {
-                          console.error(err);
-                          toast({ title: "Error updating appointment" });
-                        }
-                      }}
+                      onClick={() => handleCancelClick(apt)}
                     >
                       <X className="w-4 h-4 mr-2" />
                       Cancel
                     </Button>
 
+                    {/* Reschedule */}
                     <Button
                       size="sm"
                       className={`${actionColors.followup} justify-start transition-all duration-200 hover:scale-105 shadow-sm`}

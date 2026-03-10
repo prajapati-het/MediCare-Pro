@@ -17,6 +17,7 @@ import ProblemRouter from "./routes/ProblemRouter.js";
 import DoctorStatsRouter from "./routes/doctorStatsRouter.js";
 import BillRouter from "./routes/BillRouter.js";
 import path from "path";
+import AdminStatsRouter from "./routes/adminStatsRouter.js";
 
 
 
@@ -46,6 +47,7 @@ app.use("/staff", StaffRouter);
 app.use("/facilities", FacilityRouter);
 app.use("/problems", ProblemRouter);
 app.use('/doctor-stats', DoctorStatsRouter);
+app.use('/admin-stats',AdminStatsRouter);
 app.use('/bill', BillRouter);
 
 

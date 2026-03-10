@@ -2,10 +2,10 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Users, 
-  Plus, 
-  Search, 
-  Mail, 
+  Users,
+  Plus,
+  Search,
+  Mail,
   Phone,
   Calendar,
   Edit,
@@ -19,7 +19,7 @@ import { Header } from '@/components/Header';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -36,100 +36,103 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useDeleteStaffMutation, useGetAdminDetailsQuery, useGetHospitalByIdQuery, useGetStaffQuery } from '@/redux/slices/api';
+import {
+  useDeleteStaffMutation,
+  useGetAdminDetailsQuery,
+  useGetHospitalByIdQuery,
+  useGetStaffQuery,
+} from '@/redux/slices/api';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
+import { AddStaffRequest } from '@/types/type';
+import EditStaffDialog from './EditStaffDialog';
 
-const departments = ['All', 'ICU', 'Emergency', 'Laboratory', 'Pharmacy', 'Radiology', 'Administration', 'Cardiology', 'Neurology', 'Pediatrics', 'Oncology'];
+type StaffMember = AddStaffRequest & { name: string; _id: string };
+
+const departments = [
+  'All', 'ICU', 'Emergency', 'Laboratory', 'Pharmacy', 'Radiology',
+  'Administration', 'Cardiology', 'Neurology', 'Pediatrics', 'Oncology',
+];
 
 export default function Staff() {
   const navigate = useNavigate();
 
-  const { adminUser, isLoggedIn } = useSelector(
-    (state: RootState) => state.app
-  );
+  // Edit dialog state
+  const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
 
-  const { data: admin, isLoading: LoadingAdmin, isError } = useGetAdminDetailsQuery(String(adminUser.id));
+  const { adminUser } = useSelector((state: RootState) => state.app);
 
-  console.log(admin)
-  const hospitalId = admin?.hospital;
-  const { data: hospital } =  useGetHospitalByIdQuery(hospitalId!, {
+  const { data: admin } = useGetAdminDetailsQuery(String(adminUser.id));
+  const hospitalId = admin?.hospital ?? "";
+
+  const { data: hospital } = useGetHospitalByIdQuery(hospitalId, {
     skip: !hospitalId,
   });
+  const hospitalName = hospital?.name ?? "";
 
-  const hospitalName = hospital?.name
-
-  const { data: staffMembers = [], isLoading } =  useGetStaffQuery(hospitalName);
-
-  console.log(staffMembers)
-
+  const { data: staffMembers = [] } = useGetStaffQuery(hospitalName, {
+    skip: !hospitalName,
+  });
   const [deleteStaff] = useDeleteStaffMutation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('All');
 
-
   const filteredStaff = staffMembers.filter((s) => {
     const matchesSearch =
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.role.toLowerCase().includes(searchQuery.toLowerCase());
-
     const matchesDepartment =
-      selectedDepartment === 'All' ||
-      s.department === selectedDepartment;
-
+      selectedDepartment === 'All' || s.department === selectedDepartment;
     return matchesSearch && matchesDepartment;
   });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'on-duty': return 'bg-success text-success-foreground';
+      case 'on-duty':  return 'bg-success text-success-foreground';
       case 'off-duty': return 'bg-muted text-muted-foreground';
       case 'on-leave': return 'bg-warning text-warning-foreground';
-      default: return 'bg-muted text-muted-foreground';
+      default:         return 'bg-muted text-muted-foreground';
     }
   };
 
   const getShiftColor = (shift: string) => {
     switch (shift) {
-      case 'Morning': return 'bg-primary/10 text-primary';
+      case 'Morning':   return 'bg-primary/10 text-primary';
       case 'Afternoon': return 'bg-secondary/10 text-secondary';
-      case 'Night': return 'bg-accent/10 text-accent';
-      default: return 'bg-muted text-muted-foreground';
+      case 'Night':     return 'bg-accent/10 text-accent';
+      default:          return 'bg-muted text-muted-foreground';
     }
   };
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
   };
 
   const totalStaff = staffMembers.length;
-  const onDuty = staffMembers.filter(s => s.status === 'on-duty').length;
-  const onLeave = staffMembers.filter(s => s.status === 'on-leave').length;
+  const onDuty   = staffMembers.filter((s) => s.status === 'on-duty').length;
+  const onLeave  = staffMembers.filter((s) => s.status === 'on-leave').length;
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <div className="flex min-h-[calc(100vh-4rem)]">
         <DashboardSidebar />
-        
+
         <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 overflow-x-auto">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <motion.div variants={containerVariants} initial="hidden" animate="visible">
+
+            {/* Page heading */}
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
+            >
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                   Staff Management
@@ -138,13 +141,13 @@ export default function Staff() {
                   Manage nurses, technicians, and support staff
                 </p>
               </div>
-              
               <Button className="gap-2" onClick={() => navigate('/staff/add')}>
                 <Plus className="w-4 h-4" />
                 Add Staff Member
               </Button>
             </motion.div>
 
+            {/* Stats row */}
             <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
               <Card>
                 <CardContent className="p-4">
@@ -187,6 +190,7 @@ export default function Staff() {
               </Card>
             </motion.div>
 
+            {/* Search + department filters */}
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -197,7 +201,6 @@ export default function Staff() {
                   className="pl-10"
                 />
               </div>
-              
               <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
                 {departments.map((dept) => (
                   <Button
@@ -213,6 +216,7 @@ export default function Staff() {
               </div>
             </motion.div>
 
+            {/* Table */}
             <motion.div variants={itemVariants}>
               <Card>
                 <CardContent className="p-0">
@@ -234,7 +238,7 @@ export default function Staff() {
                             <div className="flex items-center gap-3">
                               <Avatar className="w-10 h-10 border border-border">
                                 <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                                  {staff.name.split(' ').map(n => n[0]).join('')}
+                                  {staff.name.split(' ').map((n) => n[0]).join('')}
                                 </AvatarFallback>
                               </Avatar>
                               <div>
@@ -281,15 +285,15 @@ export default function Staff() {
                                   <Eye className="w-4 h-4 mr-2" />
                                   View Profile
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Calendar className="w-4 h-4 mr-2" />
-                                  Schedule
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => navigate(`/admin/staff/${staff.id}/edit`)}>
+                                {/* ← Opens dialog instead of navigating */}
+                                <DropdownMenuItem onClick={() => setEditingStaff(staff as StaffMember)}>
                                   <Edit className="w-4 h-4 mr-2" />
                                   Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive" onClick={() => deleteStaff(String(staff.id))}>
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => deleteStaff(String(staff._id))}
+                                >
                                   <Trash2 className="w-4 h-4 mr-2" />
                                   Remove
                                 </DropdownMenuItem>
@@ -303,9 +307,19 @@ export default function Staff() {
                 </CardContent>
               </Card>
             </motion.div>
+
           </motion.div>
         </main>
       </div>
+
+      {/* Edit Staff Dialog — rendered once, outside the table */}
+      {editingStaff && (
+        <EditStaffDialog
+          staff={editingStaff}
+          open={!!editingStaff}
+          onClose={() => setEditingStaff(null)}
+        />
+      )}
     </div>
   );
 }

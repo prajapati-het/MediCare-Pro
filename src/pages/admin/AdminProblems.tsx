@@ -10,18 +10,16 @@ import {
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProblemsByHospitalName } from '@/data/problemsData';
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { logout as logoutAction } from "@/redux/slices/appSlice";
 import { useGetAdminDetailsQuery, useGetProblemsByHospitalQuery } from '@/redux/slices/api';
+import { BadgeVariant } from '@/types/type';
 
 export default function AdminProblems() {
   const navigate = useNavigate();
@@ -67,14 +65,14 @@ export default function AdminProblems() {
     visible: { opacity: 1, y: 0 },
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'Critical': return 'destructive';
-      case 'High': return 'default';
-      case 'Medium': return 'secondary';
-      default: return 'outline';
-    }
-  };
+ const getPriorityColor = (priority: string): BadgeVariant => {
+  switch (priority) {
+    case 'Critical': return 'destructive';
+    case 'High':     return 'default';
+    case 'Medium':   return 'secondary';
+    default:         return 'outline';
+  }
+};
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -203,7 +201,7 @@ export default function AdminProblems() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant={getPriorityColor(problem.priority) as any}>
+                          <Badge variant={getPriorityColor(problem.priority)}>
                             {problem.priority}
                           </Badge>
                           <Badge variant="outline">{problem.status}</Badge>

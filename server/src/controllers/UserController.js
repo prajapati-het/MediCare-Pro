@@ -5,9 +5,7 @@ import crypto from "crypto";
 import { User } from "../models/User.js";
 dotenv.config();
 const googleClient = new OAuth2Client(process.env.VITE_CLIENT_ID);
-// --------------------------------------------------
-// helper → stable providerId for email-password users
-// --------------------------------------------------
+
 const emailProviderId = (email) => crypto.createHash("sha256").update(email).digest("hex");
 // ==================================================
 // 🔐 GOOGLE SIGN-IN
