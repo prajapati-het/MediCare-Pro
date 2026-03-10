@@ -1,6 +1,6 @@
 import { RootState } from "@/redux/store";
 import { useSelector } from "react-redux";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Receipt,
   Download,
@@ -44,18 +44,19 @@ interface MedicineItem {
 export default function PatientBill() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [billNumber, setBillNumber] = useState<string>("");
 
+  // ── Pick up billId passed from PatientBillsTimeline via navigate state ──
+  const location = useLocation();
+  const selectedBillId: string | undefined = location.state?.billId;
+
+  const [billNumber, setBillNumber] = useState<string>("");
   const [createBill] = useCreateBillMutation();
 
   const { data: patient, isLoading, isError } = useGetPatientByIdQuery(id!);
   let currentUser = useSelector((state: RootState) => state.app.doctorUser);
-  const {
-    data: doctor,
-    isLoading: isLoadingDoctorDetails,
-    isError: isErrorDoctorDetails,
-    refetch,
-  } = useGetDoctorDetailsQuery(String(currentUser.id));
+
+  const { data: doctor } = useGetDoctorDetailsQuery(String(currentUser.id));
+
   const { data: apiData } = useGetDoctorPatientsQuery(
     String(currentUser.id ?? null),
     { skip: currentUser.id == null }
@@ -63,29 +64,24 @@ export default function PatientBill() {
 
   currentUser = doctor;
 
-  console.log(patient)
+  const { data: billData, refetch: refetchBill } = useGetBillsByPatientQuery(
+    Number(patient?.id),
+    { skip: !patient?.id }
+  );
 
-  const {
-  data: billData,
-  isLoading: billLoading,
-  refetch: refetchBill,
-} = useGetBillsByPatientQuery(Number(patient?.id), {
-  skip: !patient?.id,
-});
+  // ── If a specific billId was passed (from timeline), find that bill.
+  //    Otherwise fall back to the latest (first) bill. ──
+  const bill = selectedBillId
+    ? (billData?.find((b: any) => b._id === selectedBillId) ?? billData?.[0])
+    : billData?.[0];
 
-  const bill = billData?.[0];
-
-  console.log(billData)
-
- const saveBill = async () => {
+  const saveBill = async () => {
   if (!patient || !currentUser) return;
 
   const res = await createBill({
     doctorId: currentUser._id,
     doctorCode: currentUser.doctorCode,
-
-    patientId: patient.id, // ✅ changed
-
+    patientId: patient.id,
     medicines,
     consultationFee,
     labTestsFee: labTests,
@@ -95,27 +91,24 @@ export default function PatientBill() {
   }).unwrap();
 
   setBillNumber(res.data.billNumber);
+  await refetchBill();   // ← add this
 };
-  
 
   const reportUrl = `${window.location.origin}/bill/${patient?.id}`;
 
   const medicines: MedicineItem[] = bill?.medicines ?? [];
-
   const consultationFee = bill?.consultationFee ?? 0;
-const labTests = bill?.labTestsFee ?? 0;
+  const labTests = bill?.labTestsFee ?? 0;
   const subtotal = bill?.subtotal ?? 0;
-const tax = bill?.tax ?? 0;
-const total = bill?.total ?? 0;
-
-const currentBillNumber = bill?.billNumber ?? billNumber;
+  const tax = bill?.tax ?? 0;
+  const total = bill?.total ?? 0;
+  const currentBillNumber = bill?.billNumber ?? billNumber;
 
   const billDate = new Date().toLocaleDateString("en-IN", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-
 
   const handlePrint = async () => {
     await saveBill();
@@ -124,8 +117,8 @@ const currentBillNumber = bill?.billNumber ?? billNumber;
 
   const handleDownload = async (format: "png" | "jpeg" | "pdf") => {
     if (!currentBillNumber) {
-    await saveBill();
-  }
+      await saveBill();
+    }
     const element = document.getElementById("bill-preview");
     if (!element) return;
 
@@ -147,6 +140,13 @@ const currentBillNumber = bill?.billNumber ?? billNumber;
     }
   };
 
+  const status        = bill?.status        ?? "Pending";
+  const paymentMethod = bill?.paymentMethod ?? "Cash";
+  const notes         = bill?.notes;
+  const taxPercent    = bill?.subtotal > 0
+    ? Math.round((bill.tax / bill.subtotal) * 100)
+    : 0;
+
   const billProps = {
     patient,
     currentUser,
@@ -159,6 +159,10 @@ const currentBillNumber = bill?.billNumber ?? billNumber;
     billDate,
     currentBillNumber,
     reportUrl,
+    status,           // ← new
+    paymentMethod,    // ← new
+    notes,            // ← new
+    taxPercent,       // ← new
   };
 
   return (
@@ -175,7 +179,7 @@ const currentBillNumber = bill?.billNumber ?? billNumber;
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-200 shadow-sm">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
-            {/* Back button */}
+            {/* Back — returns to timeline (or wherever came from) */}
             <button
               onClick={() => navigate(-1)}
               className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors group"
@@ -183,16 +187,20 @@ const currentBillNumber = bill?.billNumber ?? billNumber;
               <span className="flex items-center justify-center w-8 h-8 rounded-full border border-slate-200 group-hover:border-slate-400 transition-colors">
                 <ArrowLeft className="h-4 w-4" />
               </span>
-              <span className="hidden sm:inline">Back to Patients</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
 
             {/* Bill identity */}
             <div className="hidden md:flex flex-col items-center leading-tight">
-              <span className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">Invoice</span>
-              <span className="text-sm font-semibold text-slate-700 font-mono">{currentBillNumber}</span>
+              <span className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
+                Invoice
+              </span>
+              <span className="text-sm font-semibold text-slate-700 font-mono">
+                {currentBillNumber}
+              </span>
             </div>
 
-            {/* Action buttons */}
+            {/* Actions */}
             <div className="flex items-center gap-2">
               <Button
                 onClick={handlePrint}
@@ -206,10 +214,7 @@ const currentBillNumber = bill?.billNumber ?? billNumber;
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    size="sm"
-                    className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
-                  >
+                  <Button size="sm" className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white">
                     <Download className="h-4 w-4" />
                     <span className="hidden sm:inline">Download</span>
                     <ChevronDown className="h-3 w-3 opacity-70" />
@@ -244,34 +249,15 @@ const currentBillNumber = bill?.billNumber ?? billNumber;
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              {
-                label: "Patient",
-                value: patient?.name ?? "—",
-                sub: `ID #${patient?.id ?? "—"}`,
-              },
-              {
-                label: "Doctor",
-                value: currentUser?.username ?? "—",
-                sub: currentUser?.hospital ?? "—",
-              },
-              {
-                label: "Bill Date",
-                value: billDate,
-                sub: "Issued today",
-              },
-              {
-                label: "Total Due",
-                value: `₹${total.toFixed(2)}`,
-                sub: "Incl. 5% tax",
-                accent: true,
-              },
+              { label: "Patient",   value: patient?.name ?? "—",       sub: `ID #${patient?.id ?? "—"}` },
+              { label: "Doctor",    value: currentUser?.username ?? "—", sub: currentUser?.hospital ?? "—" },
+              { label: "Bill Date", value: billDate,                    sub: "Issued today" },
+              { label: "Total Due", value: `₹${total.toFixed(2)}`,      sub: "Incl. tax", accent: true },
             ].map(({ label, value, sub, accent }) => (
               <div
                 key={label}
                 className={`rounded-xl border px-4 py-3.5 ${
-                  accent
-                    ? "bg-blue-600 border-blue-500 text-white"
-                    : "bg-white border-slate-200"
+                  accent ? "bg-blue-600 border-blue-500 text-white" : "bg-white border-slate-200"
                 }`}
               >
                 <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${accent ? "text-blue-200" : "text-slate-400"}`}>
@@ -287,9 +273,8 @@ const currentBillNumber = bill?.billNumber ?? billNumber;
             ))}
           </div>
 
-          {/* Bill card */}
+          {/* Bill preview card */}
           <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-white">
-            {/* Card label strip */}
             <div className="flex items-center gap-2.5 px-6 py-3 bg-slate-50 border-b border-slate-200">
               <Receipt className="h-3.5 w-3.5 text-slate-400" />
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -298,13 +283,11 @@ const currentBillNumber = bill?.billNumber ?? billNumber;
               <span className="ml-auto text-xs text-slate-400 font-mono">{currentBillNumber}</span>
             </div>
 
-            {/* BillPreview component */}
             <div id="bill-preview">
               <BillPreview {...billProps} />
             </div>
           </div>
 
-          {/* Footer hint */}
           <p className="text-center text-xs text-slate-400 pb-4">
             Computer-generated document · Use the buttons above to print or export
           </p>

@@ -16,6 +16,9 @@ import FacilityRouter from "./routes/FacilityRouter.js";
 import ProblemRouter from "./routes/ProblemRouter.js";
 import DoctorStatsRouter from "./routes/doctorStatsRouter.js";
 import BillRouter from "./routes/BillRouter.js";
+import path from "path";
+
+
 
 config();
 
@@ -29,6 +32,9 @@ app.use((req, res, next) => {
   console.log("Incoming request inside index:", req.method, req.url);
   next();
 });
+app.use("/public", express.static(path.join(process.cwd(), "public")));
+
+
 
 app.use("/user", UserAuthRouter);
 app.use("/doctor", DoctorRouter);
@@ -41,8 +47,6 @@ app.use("/facilities", FacilityRouter);
 app.use("/problems", ProblemRouter);
 app.use('/doctor-stats', DoctorStatsRouter);
 app.use('/bill', BillRouter);
-
-
 
 
 await dbConnect();

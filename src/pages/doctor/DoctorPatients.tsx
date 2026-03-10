@@ -23,6 +23,11 @@ import {
   Shield,
   ClipboardList,
   StickyNote,
+  Plus,
+  Trash2,
+  CreditCard,
+  FlaskConical,
+  BadgeDollarSign,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
@@ -55,6 +60,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
@@ -64,8 +70,9 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useGetDoctorPatientsQuery, useUpdatePatientMutation } from "@/redux/slices/api";
+import { useCreateBillMutation, useGetDoctorDetailsQuery, useGetDoctorPatientsQuery, useUpdatePatientMutation } from "@/redux/slices/api";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
 type TagFilter = Patient["tag"] | "all";
 type SortBy = "name" | "date" | "status" | "tag";
@@ -82,7 +89,27 @@ type EditPatientPayload = Partial<{
   lifestyle: { smokingStatus: string; alcoholConsumption: string; exerciseFrequency: string; dietType: string; sleepHours: string };
 }>;
 
-// ─── Stable form helpers (defined OUTSIDE any component) ─────────────────────
+interface IBillMedicine {
+  name: string;
+  dosage: string;
+  quantity: number;
+  pricePerUnit: number;
+  total: number;
+}
+
+interface BillPayload {
+  medicines: IBillMedicine[];
+  consultationFee: number;
+  labTestsFee: number;
+  subtotal: number;
+  tax: number;
+  total: number;
+  status: "Pending" | "Paid" | "Cancelled";
+  paymentMethod: "Cash" | "Card" | "UPI" | "Online";
+  notes?: string;
+}
+
+// ─── Stable form helpers ──────────────────────────────────────────────────────
 
 function FormSection({
   icon, title, accent = "blue", children,
@@ -97,6 +124,7 @@ function FormSection({
     amber:  "bg-amber-500/10 text-amber-500",
     purple: "bg-purple-500/10 text-purple-500",
     slate:  "bg-slate-500/10 text-slate-500",
+    indigo: "bg-indigo-500/10 text-indigo-500",
   };
   return (
     <div className="space-y-3">
@@ -118,6 +146,260 @@ function F({ label, children, full }: { label: string; children: React.ReactNode
       <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</Label>
       {children}
     </div>
+  );
+}
+
+// ─── Generate / Edit Bill Dialog ──────────────────────────────────────────────
+
+interface GenerateBillDialogProps {
+  patient: Patient;
+  open: boolean;
+  onClose: () => void;
+  onSave: (patientId: string | number, data: BillPayload) => Promise<void>;
+}
+
+const emptyMedicine = (): IBillMedicine => ({
+  name: "", dosage: "", quantity: 1, pricePerUnit: 0, total: 0,
+});
+
+function GenerateBillDialog({ patient, open, onClose, onSave }: GenerateBillDialogProps) {
+  const initials = patient.name.split(" ").map((n: string) => n[0]).join("");
+
+  const [medicines, setMedicines] = useState<IBillMedicine[]>([emptyMedicine()]);
+  const [consultationFee, setConsultationFee] = useState<number>(0);
+  const [labTestsFee, setLabTestsFee] = useState<number>(0);
+  const [taxPercent, setTaxPercent] = useState<number>(0);
+  const [status, setStatus] = useState<BillPayload["status"]>("Pending");
+  const [paymentMethod, setPaymentMethod] = useState<BillPayload["paymentMethod"]>("Cash");
+  const [notes, setNotes] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const updateMedicine = (index: number, field: keyof IBillMedicine, value: string | number) => {
+    setMedicines((prev) => {
+      const updated = [...prev];
+      const med = { ...updated[index], [field]: value };
+      if (field === "quantity" || field === "pricePerUnit") {
+        med.total = Number(med.quantity) * Number(med.pricePerUnit);
+      }
+      updated[index] = med;
+      return updated;
+    });
+  };
+
+  const addMedicine = () => setMedicines((p) => [...p, emptyMedicine()]);
+  const removeMedicine = (i: number) => setMedicines((p) => p.filter((_, idx) => idx !== i));
+
+  const medicinesTotal = medicines.reduce((s, m) => s + (m.total || 0), 0);
+  const subtotal = medicinesTotal + consultationFee + labTestsFee;
+  const taxAmount = (subtotal * taxPercent) / 100;
+  const total = subtotal + taxAmount;
+
+  const handleSubmit = async () => {
+    setIsSaving(true);
+    await onSave(patient.id, {
+      medicines,
+      consultationFee,
+      labTestsFee,
+      subtotal,
+      tax: taxAmount,
+      total,
+      status,
+      paymentMethod,
+      notes,
+    });
+    setIsSaving(false);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl w-full p-0 gap-0 overflow-hidden rounded-2xl">
+
+        {/* ── Gradient banner ── */}
+        <div className="bg-gradient-to-r from-emerald-600/90 to-emerald-500 px-6 pt-5 pb-4 shrink-0">
+          <DialogHeader className="space-y-0 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white font-bold text-base shadow shrink-0">
+                {initials}
+              </div>
+              <div>
+                <DialogTitle className="text-white text-base font-bold leading-tight">
+                  Generate / Edit Bill
+                </DialogTitle>
+                <p className="text-white/65 text-xs mt-0.5">
+                  {patient.name} · {[patient.age && `${patient.age} yrs`, patient.gender].filter(Boolean).join(" · ")}
+                </p>
+              </div>
+            </div>
+          </DialogHeader>
+        </div>
+
+        {/* ── Fixed-height scrollable body ── */}
+        <div className="h-[52vh] overflow-y-auto px-6 py-5 bg-background space-y-6">
+
+          {/* Medicines */}
+          <FormSection icon={<ClipboardList className="w-3.5 h-3.5" />} title="Medicines" accent="blue">
+            <div className="space-y-2">
+              {/* Header row */}
+              <div className="grid grid-cols-[1fr_80px_80px_80px_80px_28px] gap-2 px-1">
+                {["Name", "Dosage", "Qty", "Price/Unit", "Total", ""].map((h) => (
+                  <span key={h} className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{h}</span>
+                ))}
+              </div>
+
+              {medicines.map((med, i) => (
+                <div key={i} className="grid grid-cols-[1fr_80px_80px_80px_80px_28px] gap-2 items-center">
+                  <Input
+                    className="h-8 text-xs"
+                    placeholder="Paracetamol"
+                    value={med.name}
+                    onChange={(e) => updateMedicine(i, "name", e.target.value)}
+                  />
+                  <Input
+                    className="h-8 text-xs"
+                    placeholder="500mg"
+                    value={med.dosage}
+                    onChange={(e) => updateMedicine(i, "dosage", e.target.value)}
+                  />
+                  <Input
+                    className="h-8 text-xs"
+                    type="number"
+                    min={1}
+                    value={med.quantity}
+                    onChange={(e) => updateMedicine(i, "quantity", Number(e.target.value))}
+                  />
+                  <Input
+                    className="h-8 text-xs"
+                    type="number"
+                    min={0}
+                    value={med.pricePerUnit}
+                    onChange={(e) => updateMedicine(i, "pricePerUnit", Number(e.target.value))}
+                  />
+                  <div className="h-8 flex items-center text-xs font-medium text-foreground px-2 bg-muted/50 rounded-md border">
+                    ₹{med.total.toFixed(2)}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
+                    onClick={() => removeMedicine(i)}
+                    disabled={medicines.length === 1}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ))}
+
+              <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 mt-1" onClick={addMedicine}>
+                <Plus className="w-3 h-3" />Add Medicine
+              </Button>
+            </div>
+          </FormSection>
+
+          {/* Fees */}
+          <FormSection icon={<BadgeDollarSign className="w-3.5 h-3.5" />} title="Fees" accent="teal">
+            <div className="grid grid-cols-2 gap-3">
+              <F label="Consultation Fee (₹)">
+                <Input
+                  className="h-9 text-sm"
+                  type="number" min={0}
+                  value={consultationFee}
+                  onChange={(e) => setConsultationFee(Number(e.target.value))}
+                  placeholder="500"
+                />
+              </F>
+              <F label="Lab Tests Fee (₹)">
+                <Input
+                  className="h-9 text-sm"
+                  type="number" min={0}
+                  value={labTestsFee}
+                  onChange={(e) => setLabTestsFee(Number(e.target.value))}
+                  placeholder="0"
+                />
+              </F>
+              <F label="Tax (%)">
+                <Input
+                  className="h-9 text-sm"
+                  type="number" min={0} max={100}
+                  value={taxPercent}
+                  onChange={(e) => setTaxPercent(Number(e.target.value))}
+                  placeholder="0"
+                />
+              </F>
+            </div>
+
+            {/* Summary */}
+            <div className="mt-3 rounded-lg border bg-muted/30 px-4 py-3 space-y-1.5 text-sm">
+              <div className="flex justify-between text-muted-foreground text-xs">
+                <span>Medicines</span><span>₹{medicinesTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground text-xs">
+                <span>Consultation</span><span>₹{consultationFee.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground text-xs">
+                <span>Lab Tests</span><span>₹{labTestsFee.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground text-xs">
+                <span>Tax ({taxPercent}%)</span><span>₹{taxAmount.toFixed(2)}</span>
+              </div>
+              <div className="border-t pt-1.5 flex justify-between font-semibold text-foreground">
+                <span>Total</span><span>₹{total.toFixed(2)}</span>
+              </div>
+            </div>
+          </FormSection>
+
+          {/* Payment & Status */}
+          <FormSection icon={<CreditCard className="w-3.5 h-3.5" />} title="Payment & Status" accent="purple">
+            <div className="grid grid-cols-2 gap-3">
+              <F label="Status">
+                <Select value={status} onValueChange={(v) => setStatus(v as BillPayload["status"])}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["Pending", "Paid", "Cancelled"].map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </F>
+              <F label="Payment Method">
+                <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as BillPayload["paymentMethod"])}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["Cash", "Card", "UPI", "Online"].map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </F>
+            </div>
+          </FormSection>
+
+          {/* Notes */}
+          <FormSection icon={<StickyNote className="w-3.5 h-3.5" />} title="Notes" accent="slate">
+            <Textarea
+              className="text-sm resize-none min-h-[72px]"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Any billing notes…"
+            />
+          </FormSection>
+        </div>
+
+        {/* ── Sticky footer ── */}
+        <div className="shrink-0 border-t border-border px-6 py-3.5 flex items-center justify-between gap-3 bg-muted/30">
+          <p className="text-xs text-muted-foreground">Total: <span className="font-semibold text-foreground">₹{total.toFixed(2)}</span></p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onClose} disabled={isSaving} className="h-8 px-4">
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleSubmit} disabled={isSaving} className="h-8 px-4 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
+              {isSaving && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+              Save Bill
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -199,7 +481,6 @@ function EditPatientDialog({ patient, open, onClose, onSave }: EditPatientDialog
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      {/* Fixed-size dialog — never resizes between tabs */}
       <DialogContent className="max-w-2xl w-full p-0 gap-0 overflow-hidden rounded-2xl">
 
         {/* ── Gradient banner ── */}
@@ -211,7 +492,7 @@ function EditPatientDialog({ patient, open, onClose, onSave }: EditPatientDialog
               </div>
               <div>
                 <DialogTitle className="text-white text-base font-bold leading-tight">
-                  {patient.name}
+                  Edit Patient Info
                 </DialogTitle>
                 <p className="text-white/65 text-xs mt-0.5">
                   {[patient.age && `${patient.age} yrs`, patient.gender, patient.condition].filter(Boolean).join(" · ")}
@@ -240,7 +521,7 @@ function EditPatientDialog({ patient, open, onClose, onSave }: EditPatientDialog
           </div>
         </div>
 
-        {/* ── Fixed-height body — h-[52vh] never changes between tabs ── */}
+        {/* ── Fixed-height body ── */}
         <div className="h-[52vh] overflow-y-auto px-6 py-5 bg-background">
 
           {/* BASIC */}
@@ -437,7 +718,7 @@ function EditPatientDialog({ patient, open, onClose, onSave }: EditPatientDialog
 export default function DoctorPatients() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const user = useSelector((state: RootState) => state.app.doctorUser);
+  let user = useSelector((state: RootState) => state.app.doctorUser);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<TagFilter>("all");
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -446,17 +727,35 @@ export default function DoctorPatients() {
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [createBill] = useCreateBillMutation();
+  
 
-  const doctorId = user?.id?.toString();
-  const { data: apiData, isLoading, isError } = useGetDoctorPatientsQuery(doctorId!, { skip: !doctorId });
+  
+ 
+  const {
+      data: doctor,
+      isLoading: isLoadingDoctorDetails,
+      isError: isErrorDoctorDetails,
+      refetch,
+    } = useGetDoctorDetailsQuery(String(user.id));
+
+    user = doctor;
+    const doctorId = user?.id?.toString();
+     const { data: apiData, isLoading, isError } = useGetDoctorPatientsQuery(doctorId!, { skip: !doctorId });
   const [updatePatient] = useUpdatePatientMutation();
 
   const patients = useMemo<Patient[]>(() => apiData?.patients ?? [], [apiData]);
 
   const [editingPatientId, setEditingPatientId] = useState<string | number | null>(null);
+  const [billingPatientId, setBillingPatientId] = useState<string | number | null>(null);
+
   const editingPatient = useMemo(
     () => patients.find((p) => p.id === editingPatientId) ?? null,
     [patients, editingPatientId]
+  );
+  const billingPatient = useMemo(
+    () => patients.find((p) => p.id === billingPatientId) ?? null,
+    [patients, billingPatientId]
   );
 
   const filteredAndSortedPatients = useMemo(() => {
@@ -502,6 +801,45 @@ export default function DoctorPatients() {
       toast({ variant: "destructive", title: "Error", description: err?.data?.message || "Failed to update patient" });
     }
   };
+
+const handleSaveBill = async (
+  patientId: string | number,
+  data: BillPayload
+) => {
+  try {
+    const res = await createBill({
+      doctorId: user.id,
+      doctorCode: user.doctorCode,
+
+      patientId: patientId,
+
+      medicines: data.medicines,
+      consultationFee: data.consultationFee,
+      labTestsFee: data.labTestsFee,
+      subtotal: data.subtotal,
+      tax: data.tax,
+      total: data.total,
+      status: data.status,
+      paymentMethod: data.paymentMethod,
+      notes: data.notes,
+    }).unwrap();
+
+    // await axios.post("http://localhost:4000/bill/send-whatsapp-dummy");
+
+    toast({
+      title: "Bill Saved",
+      description: "Bill generated / updated successfully",
+    });
+
+  } catch (err: any) {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description:
+        err?.data?.message || "Failed to save bill",
+    });
+  }
+};
 
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.04 } } };
   const itemVariants = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } };
@@ -654,7 +992,7 @@ export default function DoctorPatients() {
               </AnimatePresence>
             </motion.div>
 
-            {/* ── Patient Grid — 4 columns on xl ── */}
+            {/* Patient Grid */}
             <motion.div variants={itemVariants}>
               {paginatedPatients.length === 0 ? (
                 <div className="text-center py-20">
@@ -676,7 +1014,6 @@ export default function DoctorPatients() {
                       >
                         <Card className="group overflow-hidden border shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
                           <CardContent className="p-0">
-                            {/* Hover accent strip */}
                             <div className="h-0.5 w-full bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
 
                             <div className="p-4">
@@ -701,9 +1038,21 @@ export default function DoctorPatients() {
                                       <MoreVertical className="w-3.5 h-3.5" />
                                     </Button>
                                   </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-28" sideOffset={4}>
-                                    <DropdownMenuItem className="gap-2 text-xs cursor-pointer" onClick={() => setEditingPatientId(patient.id)}>
-                                      <Pencil className="w-3 h-3" />Edit
+                                  <DropdownMenuContent align="end" className="w-44" sideOffset={4}>
+                                    <DropdownMenuItem
+                                      className="gap-2 text-xs cursor-pointer"
+                                      onClick={() => setEditingPatientId(patient.id)}
+                                    >
+                                      <Pencil className="w-3 h-3" />
+                                      Edit Patient Info
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="gap-2 text-xs cursor-pointer text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50"
+                                      onClick={() => setBillingPatientId(patient.id)}
+                                    >
+                                      <Receipt className="w-3 h-3" />
+                                      Generate / Edit Bill
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
@@ -736,7 +1085,7 @@ export default function DoctorPatients() {
                                 <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/doctor/patients/${patient.id}/records`)}>
                                   <FileText className="w-3 h-3" />
                                 </Button>
-                                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/doctor/${user.id}/patients/${patient.id}/bill`)}>
+                                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/doctor/${user.id}/patients/${patient.id}/bills`)}>
                                   <Receipt className="w-3 h-3" />
                                 </Button>
                               </div>
@@ -788,12 +1137,23 @@ export default function DoctorPatients() {
         </main>
       </div>
 
+      {/* Edit Patient Info Dialog */}
       {editingPatient && (
         <EditPatientDialog
           patient={editingPatient}
           open={!!editingPatient}
           onClose={() => setEditingPatientId(null)}
           onSave={handleSavePatient}
+        />
+      )}
+
+      {/* Generate / Edit Bill Dialog */}
+      {billingPatient && (
+        <GenerateBillDialog
+          patient={billingPatient}
+          open={!!billingPatient}
+          onClose={() => setBillingPatientId(null)}
+          onSave={handleSaveBill}
         />
       )}
     </div>

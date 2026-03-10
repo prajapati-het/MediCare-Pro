@@ -1,45 +1,108 @@
 import {Bill} from "../models/Bill.js";
 import { Request, Response } from "express";
-
+import { Patient } from "../models/Patient.js";
+import { sendBillWhatsapp } from "./sendBillWhatsapp.js";
+import { Doctor } from "../models/Doctor.js";
+import mongoose from "mongoose";
 
 
 export const createBill = async (req: Request, res: Response): Promise<void> => {
   try {
-    // get current year
-    const year = new Date().getFullYear();
+    const {
+      billId,        // ← passed from frontend when editing
+      doctorId,
+      patientId,
+      doctorCode,
+      medicines,
+      consultationFee,
+      labTestsFee,
+      subtotal,
+      tax,
+      total,
+      status,
+      paymentMethod,
+      notes,
+    } = req.body;
 
-    // find last bill of this year
+    const patient = await Patient.findOne({ id: patientId });
+    const doctor = await Doctor.findOne({ doctorCode });
+    const doctorObjectId = new mongoose.Types.ObjectId(doctorId);
+
+    // =========================
+    // UPDATE — only if billId was explicitly passed
+    // =========================
+    if (billId) {
+      const updated = await Bill.findByIdAndUpdate(
+        billId,
+        { medicines, consultationFee, labTestsFee, subtotal, tax, total, status, paymentMethod, notes },
+        { new: true }
+      );
+
+      if (!updated) {
+        res.status(404).json({ success: false, message: "Bill not found" });
+        return;
+      }
+
+      // ── Only notify on Paid ──
+      if (status === "Paid") {
+        try {
+          await sendBillWhatsapp(updated, patient, doctor);
+        } catch (err) {
+          console.log("WhatsApp failed (update)", err);
+        }
+      }
+
+      res.status(200).json({ success: true, message: "Bill updated", data: updated });
+      return;
+    }
+
+    // =========================
+    // CREATE — no billId means brand-new bill
+    // =========================
+    console.log("CREATE branch");
+
+    const year = new Date().getFullYear();
     const lastBill = await Bill.findOne({
       billNumber: { $regex: `BILL-${year}` },
     }).sort({ createdAt: -1 });
 
     let nextNumber = 1;
-
     if (lastBill) {
-      const lastNumber = parseInt(
-        lastBill.billNumber.split("-")[2]
-      );
-
+      const lastNumber = parseInt(lastBill.billNumber.split("-")[2]);
       nextNumber = lastNumber + 1;
     }
 
-    const billNumber = `BILL-${year}-${String(
-      nextNumber
-    ).padStart(4, "0")}`;
+    const billNumber = `BILL-${year}-${String(nextNumber).padStart(4, "0")}`;
 
     const bill = await Bill.create({
-      ...req.body,
       billNumber,
+      doctorId: doctorObjectId,
+      doctorCode,
+      patientId,
+      medicines,
+      consultationFee,
+      labTestsFee,
+      subtotal,
+      tax,
+      total,
+      status:        status        ?? "Pending",
+      paymentMethod: paymentMethod ?? "Cash",
+      notes,
     });
 
-    res.status(201).json({
-      success: true,
-      data: bill,
-    });
+    if (bill.status === "Paid") {
+        try {
+          await sendBillWhatsapp(bill, patient, doctor);
+        } catch (err) {
+          console.log("WhatsApp failed (create)", err);
+        }
+      }
+
+    res.status(201).json({ success: true, message: "Bill created", data: bill });
 
   } catch (err) {
-    console.log("[createBill]", err);
-    res.status(500).json({ message: "Server error" });
+    console.log("[createBill ERROR]", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 

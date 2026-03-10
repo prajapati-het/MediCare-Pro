@@ -49,6 +49,7 @@ const DoctorPatients = lazy(() => import("./pages/doctor/DoctorPatients"));
 const DoctorProfile = lazy(() => import("./pages/doctor/DoctorProfile"));
 const AppointmentDetail = lazy(() => import("./pages/doctor/AppointmentDetail"));
 const PatientDetail = lazy(() => import("./pages/doctor/PatientDetails/PatientDetail"));
+const PatientBillsTimeline  = lazy(() => import("./pages/doctor/PatientDetails/bill/PatientBillsTimeline"));
 
 const EditDoctor = lazy(() => import("./pages/EditDoctor"));
 const EditStaff = lazy(() => import("./pages/EditStaff"));
@@ -371,11 +372,16 @@ const App = () => (
                         element={<PrintReportPage />}
                       />
 
-                      <Route
-                        path="/doctor/:docid/patients/:id/bill"
+                      {/* <Route
+                        path="/doctor/:docid/patients/:id/bills"
                         element={<PatientBill />}
+                      /> */}
+                      <Route
+                        path="/doctor/:docid/patients/:id/bills"
+                        element={<PatientBillsTimeline  />}
                       />
 
+                      <Route path="/doctor/:doctorId/patients/:id/bill"  element={<PatientBill />} />
 
                       {/* Facility */}
 
