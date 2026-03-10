@@ -3,7 +3,7 @@ import {
   Activity, Mail, Phone, MapPin, User, Stethoscope, Calendar, Receipt,
   CheckCircle2, Clock, XCircle,
 } from "lucide-react";
-import "./PrintableBill.css";
+import "./BillCSS.css/PrintableBill.css";
 import { DoctorType, Patient } from "@/types/type";
 
 interface MedicineItem {
@@ -104,12 +104,6 @@ export default function BillPreview({
                 {currentUser?.hospital || "City General Hospital"}
               </h1>
               <div className="flex items-center gap-3 text-xs text-gray-600 mt-0.5">
-                {currentUser?.address && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {currentUser.address}
-                  </span>
-                )}
                 {currentUser?.phone && (
                   <span className="flex items-center gap-1">
                     <Phone className="h-3 w-3" />

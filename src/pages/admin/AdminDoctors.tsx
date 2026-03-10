@@ -13,7 +13,6 @@ import {
 import { Header } from '@/components/Header';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDoctors } from '@/contexts/DoctorsContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
