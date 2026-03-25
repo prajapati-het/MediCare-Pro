@@ -75,6 +75,10 @@ export default function Index() {
     }
   };
 
+const handleBookAppointment = () => {
+  navigate('/bookappointment');
+};
+
   if (showIntro) {
     return <IntroLoader onComplete={handleIntroComplete} />;
   }
@@ -123,7 +127,7 @@ export default function Index() {
                     variant="hero" 
                     size="xl" 
                     className="gap-2"
-                    onClick={handleNavigateWithAuth}
+                    onClick={handleBookAppointment}
                   >
                     <Calendar className="w-5 h-5" />
                     Book Appointments

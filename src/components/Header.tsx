@@ -54,10 +54,6 @@ export function Header() {
 
   const isLanding = location.pathname === "/";
 
-  const handleBookAppointments = () => {
-    navigate("/bookappointment");
-  };
-
  const handleLogout = async () => {
   try {
     // 1️⃣ call backend to clear httpOnly cookie
@@ -208,33 +204,6 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-2">
-            <motion.button
-              onClick={handleBookAppointments}
-              className="relative px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground overflow-hidden group"
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              {/* Animated background */}
-              <motion.div
-                className="absolute inset-0 bg-muted/50 rounded-xl"
-                initial={{ x: '-100%' }}
-                whileHover={{ x: 0 }}
-                transition={{ duration: 0.3 }}
-              />
-              
-              <span className="relative flex items-center gap-2">
-                <motion.div
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <Calendar className="w-4 h-4" />
-                </motion.div>
-                Book Appointments
-              </span>
-            </motion.button>
 
             <NavLink to="/about" active={location.pathname === "/about"} delay={0.2}>
               <Info className="w-4 h-4" />

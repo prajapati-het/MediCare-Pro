@@ -372,6 +372,7 @@ export default function Auth() {
                 if (cred.credential) handleGoogleLogin(cred.credential);
               }}
               onError={() => console.log("Google Login Failed")}
+              text="continue_with"
             />
           </motion.div>
 
@@ -505,27 +506,6 @@ export default function Auth() {
               </motion.div>
             </motion.div>
 
-            {isLogin && (
-              <motion.div
-                variants={itemVariants}
-                className="flex items-center justify-between"
-              >
-                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="rounded border-gray-300 accent-blue-600"
-                  />
-                  Remember me
-                </label>
-                <button
-                  type="button"
-                  className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
-                >
-                  Forgot password?
-                </button>
-              </motion.div>
-            )}
-
             <motion.div variants={itemVariants}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <button
@@ -545,21 +525,6 @@ export default function Auth() {
               </motion.div>
             </motion.div>
           </form>
-
-          <motion.div variants={itemVariants} className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-              <motion.button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-blue-600 hover:text-blue-700 font-semibold transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {isLogin ? "Sign Up" : "Sign In"}
-              </motion.button>
-            </p>
-          </motion.div>
 
           <motion.div
             variants={itemVariants}

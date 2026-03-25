@@ -12,11 +12,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { AppointmentCalendar } from '@/components/AppointmentCalendar';
-import { selectMonthlyAppointmentsByDoctor, selectTodayAppointmentsByDoctor } from '@/selectors/selectors';
-import { useAppSelector } from '@/redux/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useGetMonthlyAppointmentsQuery, useGetTodayAppointmentsQuery } from '@/redux/slices/api';
-import { useEffect } from 'react';
 
 export default function DoctorAppointments() {
   const user  = useSelector((state: RootState) => state.app.doctorUser);

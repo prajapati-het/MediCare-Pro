@@ -90,9 +90,13 @@ export const createBill = async (req: Request, res: Response): Promise<void> => 
       notes,
     });
 
+    console.log(bill)
+
     if (bill.status === "Paid") {
+      console.log("whatsapp bill entering")
         try {
           await sendBillWhatsapp(bill, patient, doctor);
+          console.log("whatsapp bill exiting......")
         } catch (err) {
           console.log("WhatsApp failed (create)", err);
         }

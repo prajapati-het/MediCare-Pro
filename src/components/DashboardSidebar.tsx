@@ -135,12 +135,12 @@ export function DashboardSidebar() {
 
         {/* System */}
         <div className="space-y-1">
-          {!isCollapsed && (
+          {adminUser && !isCollapsed && (
             <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               System
             </p>
           )}
-          {filterByRole(systemItems).map((item) => (
+          { filterByRole(systemItems).map((item) => (
             <SidebarLink
               key={item.path}
               item={item}

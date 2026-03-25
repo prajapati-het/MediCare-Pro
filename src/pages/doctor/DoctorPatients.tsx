@@ -14,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Patient } from "@/data/patientsData";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { format, isWithinInterval, parseISO } from "date-fns";
@@ -24,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { GenerateBillDialog } from "@/components/bill/GenerateBillDialog";
 import { EditPatientDialog, EditPatientPayload } from "@/components/patient/EditPatientDialog";
 import { BillPayload } from "../../components/bill/billTypes";
+import { Patient } from "@/types/type";
 
 type TagFilter = Patient["tag"] | "all";
 type SortBy = "name" | "date" | "status" | "tag";
@@ -72,8 +72,13 @@ export default function DoctorPatients() {
   user = doctor;
   const doctorId = user?.id?.toString();
 
-  const { data: apiData, isLoading, isError } = useGetDoctorPatientsQuery(doctorId!, { skip: !doctorId });
-  const [updatePatient] = useUpdatePatientMutation();
+  const { data: apiData, isLoading, isError } = useGetDoctorPatientsQuery(doctorId!, {
+    skip: !doctorId,
+    refetchOnMountOrArgChange: true,
+    pollingInterval: 30000,         
+  }); 
+
+const [updatePatient] = useUpdatePatientMutation();
   const [createBill]    = useCreateBillMutation();
 
   const patients = useMemo<Patient[]>(() => apiData?.patients ?? [], [apiData]);

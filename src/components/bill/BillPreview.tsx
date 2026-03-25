@@ -1,8 +1,5 @@
 import { QRCodeCanvas } from "qrcode.react";
-import {
-  Activity, Mail, Phone, MapPin, User, Stethoscope, Calendar, Receipt,
-  CheckCircle2, Clock, XCircle,
-} from "lucide-react";
+import { CheckCircle2, Clock, XCircle } from "lucide-react";
 import "./BillCSS.css/PrintableBill.css";
 import { DoctorType, Patient } from "@/types/type";
 
@@ -27,36 +24,71 @@ interface BillPreviewProps {
   billDate: string;
   currentBillNumber: string;
   reportUrl: string;
-  // ── new props ──
   status?: "Paid" | "Pending" | "Cancelled";
   paymentMethod?: string;
   notes?: string;
   taxPercent?: number;
 }
 
+// ── Status badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
+  const base = "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border";
   switch (status) {
     case "Paid":
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">
+        <span className={`${base} bg-emerald-100 text-emerald-700 border-emerald-200`}>
           <CheckCircle2 className="h-3 w-3" /> Paid
         </span>
       );
     case "Pending":
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+        <span className={`${base} bg-amber-100 text-amber-700 border-amber-200`}>
           <Clock className="h-3 w-3" /> Pending
         </span>
       );
     case "Cancelled":
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-600 border border-red-200">
+        <span className={`${base} bg-red-100 text-red-600 border-red-200`}>
           <XCircle className="h-3 w-3" /> Cancelled
         </span>
       );
     default:
       return <span className="text-xs text-gray-500">{status ?? "—"}</span>;
   }
+}
+
+// ── Accreditation circle badge ───────────────────────────────────────────────
+function AccrBadge({
+  label, sub, bg, border, color,
+}: {
+  label: string; sub: string;
+  bg: string; border: string; color: string;
+}) {
+  return (
+    <div style={{
+      width: 34, height: 34, borderRadius: "50%",
+      background: bg, border: `2px solid ${border}`,
+      display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      fontSize: 7.5, fontWeight: 700, color,
+      lineHeight: 1.2, textAlign: "center",
+      fontFamily: "Arial, sans-serif", flexShrink: 0,
+    }}>
+      <span>{label}</span><span>{sub}</span>
+    </div>
+  );
+}
+
+// ── Section heading (underlined, bold) ──────────────────────────────────────
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      fontSize: 13, fontWeight: 700, textDecoration: "underline",
+      marginTop: 12, marginBottom: 4, fontFamily: "Arial, sans-serif",
+    }}>
+      {children}
+    </div>
+  );
 }
 
 export default function BillPreview({
@@ -77,7 +109,6 @@ export default function BillPreview({
   taxPercent,
 }: BillPreviewProps) {
 
-  // Derive tax % label: prefer explicit prop, else back-calculate from subtotal
   const taxLabel =
     taxPercent != null
       ? `${taxPercent}%`
@@ -85,209 +116,260 @@ export default function BillPreview({
       ? `${Math.round((tax / subtotal) * 100)}%`
       : "0%";
 
+  const reportedTime = new Date().toLocaleTimeString("en-IN", {
+    hour: "2-digit", minute: "2-digit",
+  });
+
+  const tdBase: React.CSSProperties = {
+    border: "1px solid #bbb",
+    padding: "7px 8px",
+    verticalAlign: "top",
+    fontSize: 11,
+  };
+
   return (
-    <div className="bg-white relative">
-      {/* Print Watermark */}
+    <div style={{ fontFamily: "'Times New Roman', Georgia, serif", background: "#fff", color: "#1a1a1a", fontSize: 12, position: "relative" }}>
+
+      {/* ── Print watermark ────────────────────────────────────────────── */}
       <div className="print-watermark">
         <span>{currentUser?.hospital}</span>
       </div>
 
-      {/* Header */}
-      <header className="border-b-2 border-blue-600 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-600 rounded-lg p-2">
-              <Activity className="h-6 w-6 text-white" strokeWidth={2.5} />
+      {/* ══ HEADER ══════════════════════════════════════════════════════════ */}
+      <header style={{
+        padding: "14px 20px 10px",
+        borderBottom: "2.5px solid #1a3a6b",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        gap: 12,
+      }}>
+        {/* Left: logo + badges + QR */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {/* 3-bar logo */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", gap: 3, height: 40 }}>
+              {(["#1a3a6b", "#c41230", "#1a3a6b"] as const).map((c, i) => (
+                <div key={i} style={{ width: 9, height: "100%", background: c, borderRadius: 2 }} />
+              ))}
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                {currentUser?.hospital || "City General Hospital"}
-              </h1>
-              <div className="flex items-center gap-3 text-xs text-gray-600 mt-0.5">
-                {currentUser?.phone && (
-                  <span className="flex items-center gap-1">
-                    <Phone className="h-3 w-3" />
-                    {currentUser.phone}
-                  </span>
-                )}
+              <div style={{
+                fontSize: 24, fontWeight: 900, color: "#1a3a6b",
+                letterSpacing: 1, lineHeight: 1,
+                fontFamily: "'Arial Black', Arial, sans-serif",
+              }}>
+                {currentUser?.hospital?.split(" ")[0]?.toUpperCase() ?? "CLINIC"}
+              </div>
+              <div style={{
+                fontSize: 8, fontWeight: 700, color: "#1a3a6b",
+                letterSpacing: 2, fontFamily: "Arial, sans-serif", marginTop: 2,
+              }}>
+                {currentUser?.hospital?.toUpperCase() ?? "HOSPITAL"}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-center">
-            <QRCodeCanvas value={reportUrl} size={60} level="H" />
-            <p className="text-xs text-gray-500 mt-1">Scan Bill</p>
+          {/* Accreditation badges */}
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <AccrBadge label="NABH" sub="✓" bg="#f0c040" border="#d4a800" color="#8B6914" />
+            <AccrBadge label="JCI"  sub="+" bg="#e8f0e8" border="#4a7a4a" color="#2a5a2a" />
+          </div>
+
+          {/* QR code */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <QRCodeCanvas value={reportUrl} size={52} level="H" />
+            <span style={{ fontSize: 8, color: "#666", marginTop: 2, fontFamily: "Arial, sans-serif" }}>
+              Scan Bill
+            </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Stethoscope className="h-4 w-4 text-blue-600" />
-              <span className="text-xs font-semibold text-blue-900 uppercase">Doctor</span>
-            </div>
-            <p className="font-semibold text-gray-900 text-sm">{currentUser?.username}</p>
-            <p className="text-xs text-gray-600 flex items-center gap-1 mt-0.5">
-              <Mail className="h-3 w-3" />
-              {currentUser?.email}
-            </p>
+        {/* Right: doctor info */}
+        <div style={{ textAlign: "right", maxWidth: 280 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, fontFamily: "Arial, sans-serif", color: "#1a1a1a" }}>
+            {currentUser?.username}
           </div>
-
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <User className="h-4 w-4 text-gray-600" />
-              <span className="text-xs font-semibold text-gray-900 uppercase">Patient</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <div>
-                <p className="text-gray-500">ID</p>
-                <p className="font-semibold text-gray-900">#{patient?.id}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Name</p>
-                <p className="font-semibold text-gray-900">{patient?.name}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Age/Gender</p>
-                <p className="font-semibold text-gray-900">
-                  {patient?.age}/{patient?.gender}
-                </p>
-              </div>
-            </div>
+          <div style={{ fontSize: 9, color: "#444", lineHeight: 1.6, fontFamily: "Arial, sans-serif", marginTop: 2 }}>
+            {currentUser?.specialization && <>{currentUser.specialization}<br /></>}
+            {currentUser?.email && <>{currentUser.email}<br /></>}
+            {currentUser?.phone && <>Ph: {currentUser.phone}</>}
           </div>
         </div>
       </header>
 
-      {/* Bill Details */}
-      <div className="p-6">
-        {/* Bill Info */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Receipt className="h-5 w-5 text-blue-600" />
-              <h2 className="text-2xl font-bold text-gray-900">INVOICE</h2>
+      {/* ══ PATIENT INFO BANNER ═════════════════════════════════════════════ */}
+      <div style={{ background: "#f5f8ff", padding: "9px 20px", borderBottom: "1px solid #c0c8d8" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 24px", fontSize: 11.5 }}>
+          {[
+            ["UHID",           `#${patient?.id}`],
+            ["Visit Date",     billDate],
+            ["Patient Name",   patient?.name],
+            ["Age / Gender",   `${patient?.age} / ${patient?.gender}`],
+            ["Doctor",         currentUser?.username],
+            ["Bill No",        currentBillNumber],
+          ].map(([lbl, val], i) => (
+            <div key={i} style={{ lineHeight: 1.65 }}>
+              <span style={{ fontWeight: 700 }}>{lbl}</span> : {val}
             </div>
-            <p className="text-sm text-gray-600">
-              Bill Number: <span className="font-semibold">{currentBillNumber}</span>
-            </p>
+          ))}
+          <div style={{ gridColumn: "span 2", fontSize: 11.5, lineHeight: 1.65 }}>
+            <span style={{ fontWeight: 700 }}>Patient Address</span> : {patient?.address ?? "—"}
           </div>
-          <div className="text-right">
-            <div className="flex items-center gap-2 justify-end text-sm text-gray-600">
-              <Calendar className="h-4 w-4" />
-              <span>Date: {billDate}</span>
-            </div>
-            <p className="text-sm text-gray-600 mt-1">
-              Time:{" "}
-              {new Date().toLocaleTimeString("en-IN", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
+        </div>
+      </div>
+
+      {/* ══ BODY ════════════════════════════════════════════════════════════ */}
+      <div style={{ padding: "14px 20px" }}>
+
+        {/* Title */}
+        <div style={{ textAlign: "center", marginBottom: 12 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, textDecoration: "underline", fontFamily: "Arial, sans-serif" }}>
+            Outpatient Billing Invoice
+          </div>
+          <div style={{ fontSize: 11, color: "#444", fontFamily: "Arial, sans-serif" }}>
+            Reported DateTime : {billDate} {reportedTime}
           </div>
         </div>
 
-        {/* Services Table */}
-        <div className="mb-6">
-          <h3 className="font-semibold text-gray-900 mb-3">Services & Consultation</h3>
-          <table className="w-full text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="text-left p-3 font-semibold text-gray-700">Description</th>
-                <th className="text-right p-3 font-semibold text-gray-700">Amount (₹)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b">
-                <td className="p-3 text-gray-800">Doctor Consultation Fee</td>
-                <td className="p-3 text-right text-gray-800">{consultationFee.toFixed(2)}</td>
-              </tr>
-              <tr className="border-b">
-                <td className="p-3 text-gray-800">Laboratory Tests</td>
-                <td className="p-3 text-right text-gray-800">{labTests.toFixed(2)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        {/* ── Services section ─────────────────────────────────────────── */}
+        <SectionHeading>Services &amp; Consultation</SectionHeading>
+        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 4 }}>
+          <thead>
+            <tr style={{ background: "#1a3a6b" }}>
+              {["Description", "Amount (₹)"].map((h, i) => (
+                <th key={i} style={{
+                  border: "1px solid #999", padding: "6px 8px",
+                  color: "#fff", fontSize: 11, fontWeight: 700,
+                  textAlign: i === 0 ? "left" : "right",
+                  fontFamily: "Arial, sans-serif",
+                }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{ ...tdBase }}>Doctor Consultation Fee</td>
+              <td style={{ ...tdBase, textAlign: "right" }}>₹{consultationFee.toFixed(2)}</td>
+            </tr>
+            <tr style={{ background: "#f9f9f9" }}>
+              <td style={{ ...tdBase }}>Laboratory Tests</td>
+              <td style={{ ...tdBase, textAlign: "right" }}>₹{labTests.toFixed(2)}</td>
+            </tr>
+          </tbody>
+        </table>
 
-        {/* Medicines Table */}
+        {/* ── Prescribed Medicines ─────────────────────────────────────── */}
         {medicines.length > 0 && (
-          <div className="mb-6">
-            <h3 className="font-semibold text-gray-900 mb-3">Prescribed Medicines</h3>
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="text-left p-3 font-semibold text-gray-700">Medicine Name</th>
-                  <th className="text-center p-3 font-semibold text-gray-700">Dosage</th>
-                  <th className="text-center p-3 font-semibold text-gray-700">Qty</th>
-                  <th className="text-right p-3 font-semibold text-gray-700">Price/Unit (₹)</th>
-                  <th className="text-right p-3 font-semibold text-gray-700">Total (₹)</th>
+          <>
+            <SectionHeading>Rx:(Prescribed Medicines)</SectionHeading>
+            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 4 }}>
+              <thead>
+                <tr style={{ background: "#1a3a6b" }}>
+                  {["S.No", "Medicine Name", "Dosage", "Qty", "Price/Unit (₹)", "Total (₹)"].map((h, i) => (
+                    <th key={i} style={{
+                      border: "1px solid #999", padding: "6px 8px",
+                      color: "#fff", fontSize: 11, fontWeight: 700,
+                      textAlign: i === 1 ? "left" : "center",
+                      fontFamily: "Arial, sans-serif",
+                    }}>
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {medicines.map((medicine, idx) => (
-                  <tr key={medicine.id ?? idx} className="border-b hover:bg-gray-50">
-                    <td className="p-3 text-gray-800">{medicine.name}</td>
-                    <td className="p-3 text-center text-gray-600">{medicine.dosage}</td>
-                    <td className="p-3 text-center text-gray-600">{medicine.quantity}</td>
-                    <td className="p-3 text-right text-gray-600">{medicine.pricePerUnit.toFixed(2)}</td>
-                    <td className="p-3 text-right font-semibold text-gray-800">{medicine.total.toFixed(2)}</td>
+                {medicines.map((med, idx) => (
+                  <tr key={med.id ?? idx} style={{ background: idx % 2 !== 0 ? "#f9f9f9" : "#fff" }}>
+                    <td style={{ ...tdBase, textAlign: "center" }}>{idx + 1}</td>
+                    <td style={{ ...tdBase, fontWeight: 700 }}>{med.name}</td>
+                    <td style={{ ...tdBase, textAlign: "center" }}>{med.dosage}</td>
+                    <td style={{ ...tdBase, textAlign: "center" }}>{med.quantity}</td>
+                    <td style={{ ...tdBase, textAlign: "right" }}>₹{med.pricePerUnit.toFixed(2)}</td>
+                    <td style={{ ...tdBase, textAlign: "right", fontWeight: 700 }}>₹{med.total.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </>
         )}
 
-        {/* Bill Summary */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Subtotal</span>
-              <span className="font-semibold text-gray-900">₹{subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              {/* ── dynamic tax label ── */}
-              <span className="text-gray-600">Tax ({taxLabel})</span>
-              <span className="font-semibold text-gray-900">₹{tax.toFixed(2)}</span>
-            </div>
-            <div className="border-t pt-2 flex justify-between items-center">
-              <span className="text-lg font-bold text-gray-900">Total Amount</span>
-              <span className="text-2xl font-bold text-blue-600">₹{total.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
+        {/* ── Bill Summary ─────────────────────────────────────────────── */}
+        <SectionHeading>Bill Summary</SectionHeading>
+        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 4 }}>
+          <tbody>
+            <tr>
+              <td style={{ ...tdBase, width: "75%" }}>Subtotal</td>
+              <td style={{ ...tdBase, textAlign: "right" }}>₹{subtotal.toFixed(2)}</td>
+            </tr>
+            <tr style={{ background: "#f9f9f9" }}>
+              <td style={{ ...tdBase }}>Tax ({taxLabel})</td>
+              <td style={{ ...tdBase, textAlign: "right" }}>₹{tax.toFixed(2)}</td>
+            </tr>
+            <tr style={{ background: "#1a3a6b" }}>
+              <td style={{ ...tdBase, border: "1px solid #0d2a52", color: "#fff", fontWeight: 700, fontSize: 13 }}>
+                Total Amount
+              </td>
+              <td style={{ ...tdBase, border: "1px solid #0d2a52", textAlign: "right", color: "#fff", fontWeight: 700, fontSize: 15 }}>
+                ₹{total.toFixed(2)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-        {/* Payment Info — fully dynamic */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-700">Payment Status:</span>
+        {/* ── Payment Info ─────────────────────────────────────────────── */}
+        <SectionHeading>Payment Details</SectionHeading>
+        <div style={{ fontSize: 12, marginLeft: 8, lineHeight: 2 }}>
+          <div>
+            <span style={{ fontWeight: 700 }}>Payment Status :</span>{" "}
             <StatusBadge status={status} />
           </div>
-          <p className="text-sm text-gray-700">
-            <span className="font-semibold">Payment Method:</span>{" "}
-            {paymentMethod}
-          </p>
+          <div>
+            <span style={{ fontWeight: 700 }}>Payment Method :</span> {paymentMethod}
+          </div>
           {notes && (
-            <p className="text-sm text-gray-700">
-              <span className="font-semibold">Notes:</span> {notes}
-            </p>
+            <div>
+              <span style={{ fontWeight: 700 }}>Notes :</span> {notes}
+            </div>
           )}
+        </div>
+
+        {/* Bill number reference */}
+        <div style={{ marginTop: 10, fontSize: 10, color: "#aaa", fontFamily: "Arial, sans-serif", textAlign: "right" }}>
+          Ref: {currentBillNumber}
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-gray-100 border-t border-gray-300 p-6 text-center">
-        <p className="text-sm text-gray-600 mb-1">
-          Thank you for choosing {currentUser?.hospital || "City General Hospital"}
-        </p>
-        <p className="text-xs text-gray-500">
-          For any queries, please contact us at{" "}
-          {currentUser?.email || "info@cityhospital.com"}{" "}
-          {currentUser?.phone && `or ${currentUser.phone}`}
-        </p>
-        <p className="text-xs text-gray-400 mt-2">
+      {/* ══ FOOTER ══════════════════════════════════════════════════════════ */}
+      <footer>
+        <div style={{
+          background: "#1a3a6b", color: "#fff",
+          padding: "9px 20px", fontSize: 10,
+          display: "flex", flexWrap: "wrap",
+          justifyContent: "space-between", gap: 6,
+          fontFamily: "Arial, sans-serif",
+        }}>
+          {currentUser?.hospital && <span>&#9679; {currentUser.hospital}</span>}
+          {currentUser?.phone   && <span>&#9742; {currentUser.phone}</span>}
+          {currentUser?.email   && <span>&#9993; {currentUser.email}</span>}
+        </div>
+        <div style={{
+          background: "#f0f4ff", borderTop: "1px solid #c0c8d8",
+          padding: "5px 20px", fontSize: 10, textAlign: "center",
+          color: "#333", fontFamily: "Arial, sans-serif",
+        }}>
+          Thank you for choosing {currentUser?.hospital ?? "our hospital"} &nbsp;·&nbsp;
           This is a computer-generated bill and does not require a signature
-        </p>
+        </div>
+        <div style={{
+          background: "#1a3a6b", color: "#aabddd",
+          padding: "4px 20px", fontSize: 10,
+          fontFamily: "Arial, sans-serif",
+        }}>
+          Page 1 of 1
+        </div>
       </footer>
     </div>
   );

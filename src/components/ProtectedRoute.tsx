@@ -2,15 +2,8 @@ import { ReactNode, Suspense } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { Loader2 } from "lucide-react";
+import { PageLoader } from "./PageLoader";
 
-function PageLoader() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Loader2 className="animate-spin" />
-    </div>
-  );
-}
 
 interface ProtectedRouteProps {
   children: ReactNode;

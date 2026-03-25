@@ -33,39 +33,48 @@ export default function PatientBill() {
     ? (billData?.find((b: any) => b._id === selectedBillId) ?? billData?.[0])
     : billData?.[0];
 
-  const medicines    = bill?.medicines       ?? [];
+  const medicines       = bill?.medicines       ?? [];
   const consultationFee = bill?.consultationFee ?? 0;
-  const labTests     = bill?.labTestsFee     ?? 0;
-  const subtotal     = bill?.subtotal        ?? 0;
-  const tax          = bill?.tax             ?? 0;
-  const total        = bill?.total           ?? 0;
-  const status       = bill?.status          ?? "Pending";
-  const paymentMethod = bill?.paymentMethod  ?? "Cash";
-  const notes        = bill?.notes;
-  const taxPercent   = bill?.subtotal > 0 ? Math.round((bill.tax / bill.subtotal) * 100) : 0;
+  const labTests        = bill?.labTestsFee     ?? 0;
+  const subtotal        = bill?.subtotal        ?? 0;
+  const tax             = bill?.tax             ?? 0;
+  const total           = bill?.total           ?? 0;
+  const status          = bill?.status          ?? "Pending";
+  const paymentMethod   = bill?.paymentMethod   ?? "Cash";
+  const notes           = bill?.notes;
+  const taxPercent      = bill?.subtotal > 0 ? Math.round((bill.tax / bill.subtotal) * 100) : 0;
   const currentBillNumber = bill?.billNumber ?? billNumber;
   const billDate = new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" });
   const reportUrl = `${window.location.origin}/bill/${patient?.id}`;
 
-  const saveBill = async () => {
+  // ── Only creates a bill if one doesn't already exist ──────────────────────
+  const saveBillIfNeeded = async () => {
+    // Bill already exists on the server — nothing to create
+    if (bill?._id || currentBillNumber) return;
+
     if (!patient || !currentUser) return;
     const res = await createBill({
-      doctorId: currentUser._id,
-      doctorCode: currentUser.doctorCode,
-      patientId: patient.id,
-      medicines, consultationFee, labTestsFee: labTests, subtotal, tax, total,
+      doctorId:        currentUser._id,
+      doctorCode:      currentUser.doctorCode,
+      patientId:       patient.id,
+      medicines,
+      consultationFee,
+      labTestsFee:     labTests,
+      subtotal,
+      tax,
+      total,
     }).unwrap();
     setBillNumber(res.data.billNumber);
     await refetchBill();
   };
 
   const handlePrint = async () => {
-    await saveBill();
+    await saveBillIfNeeded();
     setTimeout(() => window.print(), 200);
   };
 
   const handleDownload = async (format: "png" | "jpeg" | "pdf") => {
-    if (!currentBillNumber) await saveBill();
+    await saveBillIfNeeded();
     const element = document.getElementById("bill-preview");
     if (!element) return;
     const canvas = await html2canvas(element, { scale: 2, useCORS: true });

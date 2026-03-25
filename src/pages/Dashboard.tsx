@@ -255,28 +255,28 @@ export default function Dashboard() {
   const doctorId = doctorUser?.id;
 
   const { data: apiData, isLoading: patientsLoading } = useGetDoctorPatientsQuery(
-    doctorId ? String(doctorId) : skipToken
+    doctorId ? String(doctorId) : skipToken, { refetchOnMountOrArgChange: true } 
   );
   useEffect(() => {
     if (apiData?.doctorCode != null) dispatch(setDoctorCode(apiData.doctorCode));
   }, [apiData?.doctorCode, dispatch]);
 
   const { data: doctorStats, isLoading: doctorStatsLoading } = useGetDoctorStatsQuery(
-    doctorId ? String(doctorId) : skipToken
+    doctorId ? String(doctorId) : skipToken, { refetchOnMountOrArgChange: true } 
   );
 
   const today = new Date().toISOString().split('T')[0];
   const { data: todayAppointments = [] } = useGetTodayAppointmentsQuery(
-    doctorCode ? { doctorCode, date: today } : skipToken
+    doctorCode ? { doctorCode, date: today } : skipToken, { refetchOnMountOrArgChange: true } 
   );
 
   // ── Admin queries ─────────────────────────────────────────────────────────
   const adminId = adminUser?.id;
-  const { data: admin } = useGetAdminDetailsQuery(adminId ? String(adminId) : skipToken);
+  const { data: admin } = useGetAdminDetailsQuery(adminId ? String(adminId) : skipToken, { refetchOnMountOrArgChange: true } );
   const hospitalId = admin?.hospital ?? "";
   const { data: hospital } = useGetHospitalByIdQuery(hospitalId || skipToken);
   const { data: adminStats, isLoading: adminStatsLoading } = useGetAdminStatsQuery(
-    hospital?.hospitalId ? hospital.hospitalId : skipToken
+    hospital?.hospitalId ? hospital.hospitalId : skipToken, { refetchOnMountOrArgChange: true } 
   );
 
   // ── Loading ───────────────────────────────────────────────────────────────
@@ -309,11 +309,11 @@ export default function Dashboard() {
   );
 
   // Admin: today's appointments hospital-wide
-  const adminTodayAppointments = useMemo(
-    () => adminStats?.todayAppointments ?? [],
-    [adminStats]
-  );
-
+  // If your backend returns the array under a different key, e.g. appointmentsList:
+const adminTodayAppointments = useMemo(() => {
+  const raw = (adminStats as any)?.appointmentsList ?? adminStats?.todayAppointments;
+  return Array.isArray(raw) ? raw : [];
+}, [adminStats]);
   // Admin: department stats
   const departmentStats = useMemo(
     () => adminStats?.departmentStats ?? [],

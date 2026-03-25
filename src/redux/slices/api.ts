@@ -23,6 +23,8 @@ import { AddAppointmentPayload } from "@/pages/BookAppointment";
 
 export const api = createApi({
   reducerPath: "api",
+  refetchOnFocus: true,      
+  refetchOnReconnect: true, 
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:4000",
     credentials: "include",

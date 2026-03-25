@@ -1,20 +1,17 @@
 import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  Stethoscope, 
-  ArrowLeft, 
-  MapPin, 
+import {
+  ArrowLeft,
   Phone,
   Mail,
   Star,
-  Edit,
   Calendar,
   Clock,
   Users,
-  Award,
-  GraduationCap,
   Building2,
-  DollarSign
+  DollarSign,
+  BadgeCheck,
+  MapPin,
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
@@ -33,112 +30,164 @@ import {
 } from 'recharts';
 import { useGetDoctorDetailsQuery, useGetDoctorPatientsQuery } from '@/redux/slices/api';
 
-const doctorData = {
-  id: 1,
-  name: 'Dr. Sarah Mitchell',
-  firstName: 'Sarah',
-  lastName: 'Mitchell',
-  specialty: 'Cardiology',
-  email: 'sarah.mitchell@hospital.com',
-  phone: '+1 (555) 123-4567',
-  hospital: 'City General Hospital',
-  experience: '15 years',
-  rating: 4.9,
-  totalPatients: 1245,
-  appointmentsToday: 8,
-  status: 'available',
-  licenseNumber: 'MD-12345678',
-  consultationFee: 150,
-  education: 'MD from Harvard Medical School, Fellowship in Cardiology at Johns Hopkins Hospital',
-  bio: 'Dr. Sarah Mitchell is a board-certified cardiologist with over 15 years of experience in treating complex cardiovascular conditions. She specializes in interventional cardiology and has performed over 2000 successful procedures.',
-  languages: ['English', 'Spanish'],
-  awards: ['Best Cardiologist 2023', 'Excellence in Patient Care 2022', 'Research Innovation Award 2021'],
-  availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-  consultationHours: '9:00 AM - 5:00 PM',
-};
+// ─── helpers ──────────────────────────────────────────────────────────────────
 
-const weeklyAppointments = [
-  { day: 'Mon', appointments: 12 },
-  { day: 'Tue', appointments: 15 },
-  { day: 'Wed', appointments: 10 },
-  { day: 'Thu', appointments: 14 },
-  { day: 'Fri', appointments: 11 },
-];
+/** Map status string → tailwind-friendly variant label */
+function statusVariant(status: string) {
+  if (status === 'Active') return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+  if (status === 'On Leave') return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
+  return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+}
 
-const upcomingAppointments = [
-  { patient: 'John Smith', time: '9:00 AM', type: 'Follow-up' },
-  { patient: 'Emily Davis', time: '10:30 AM', type: 'Consultation' },
-  { patient: 'Robert Wilson', time: '11:00 AM', type: 'Check-up' },
-  { patient: 'Maria Garcia', time: '2:00 PM', type: 'Procedure' },
-];
+/** Render filled / half / empty stars from a numeric rating string */
+function StarRating({ rating }: { rating: string }) {
+  const num = parseFloat(rating) || 0;
+  const full = Math.floor(num);
+  const hasHalf = num - full >= 0.5;
+  return (
+    <span className="flex items-center gap-0.5">
+      {Array.from({ length: 5 }, (_, i) => {
+        const filled = i < full;
+        const half = !filled && i === full && hasHalf;
+        return (
+          <Star
+            key={i}
+            className={`w-4 h-4 ${filled || half ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground'}`}
+          />
+        );
+      })}
+      <span className="ml-1 text-sm font-medium text-foreground">{num.toFixed(1)}</span>
+    </span>
+  );
+}
+
+// ─── component ────────────────────────────────────────────────────────────────
 
 export default function DoctorDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
-  const { data: apiData, isLoading: dpLoading, isError: dpError } = useGetDoctorPatientsQuery(id!, {
-    skip: !id,
-  });
+  const {
+    data: patientsData,
+    isLoading: dpLoading,
+    isError: dpError,
+  } = useGetDoctorPatientsQuery(id!, { skip: !id });
 
-  const { data: doctor, isLoading, isError } =
-    useGetDoctorDetailsQuery(id!, {
-      skip: !id,
-  });
+  const {
+    data: doctor,
+    isLoading,
+    isError,
+  } = useGetDoctorDetailsQuery(id!, { skip: !id });
 
-  console.log("ID:", id);
-  console.log("Doctor:", doctor);
-  console.log("Loading:", isLoading);
-  console.log("Error:", isError);
-  console.log(apiData)
+  // ── loading / error states ──────────────────────────────────────────────────
+  if (isLoading || dpLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex min-h-[calc(100vh-4rem)]">
+          <DashboardSidebar />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 text-muted-foreground">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm">Loading doctor profile…</p>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
+  if (isError || dpError || !doctor || !patientsData) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex min-h-[calc(100vh-4rem)]">
+          <DashboardSidebar />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-center space-y-2">
+              <p className="text-lg font-medium text-foreground">Doctor not found</p>
+              <p className="text-sm text-muted-foreground">
+                The profile you're looking for doesn't exist or failed to load.
+              </p>
+              <Button variant="outline" onClick={() => navigate('/doctors')}>
+                Back to doctors
+              </Button>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
-  if (isLoading || dpLoading) return <div>Loading...</div>;
+  // ── derived values (no hardcoded fallbacks) ─────────────────────────────────
+  const initials = doctor.username
+    ? doctor.username
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : 'DR';
 
-  if (isError || dpError) return <div>Error loading doctor</div>;
-
-  if (!doctor || !apiData) return <div>No doctor found</div>;
+  // Build a simple weekly chart from patientsData if the backend ever returns
+  // appointment counts per day — currently we just show total patients split
+  // evenly across the doctor's availableDays as a visual placeholder driven
+  // entirely by real data (availableDays + totalPatients).
+  const weeklyChartData =
+    doctor.availableDays && doctor.availableDays.length > 0 && patientsData.totalPatients > 0
+      ? doctor.availableDays.map((day: string) => ({
+          day: day.slice(0, 3),
+          patients: Math.round(patientsData.totalPatients / doctor.availableDays.length),
+        }))
+      : [];
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <div className="flex min-h-[calc(100vh-4rem)]">
         <DashboardSidebar />
-        
+
         <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 overflow-x-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4 }}
           >
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+            {/* ── Page header ──────────────────────────────────────────────── */}
+            <div className="flex items-center gap-4 mb-8">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/doctors')}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+
               <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate('/doctors')}>
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-20 h-20 border-4 border-primary/20" >
-                    <AvatarImage src={doctor.picture || undefined} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground text-2xl font-bold">
-                      SM
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{doctor.username}</h1>
-                    <div className="flex items-center gap-3 mt-1">
-                      <Badge className="bg-primary text-primary-foreground">{doctor.speciality}</Badge>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-warning fill-warning" />
-                        <span className="font-medium">{doctor.rating}</span>
-                      </div>
-                      <Badge className="bg-success text-success-foreground">{doctor.status}</Badge>
-                    </div>
+                <Avatar className="w-20 h-20 border-4 border-primary/20">
+                  <AvatarImage src={doctor.picture ?? undefined} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+                    {doctor.username}
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-3 mt-1">
+                    <Badge className="bg-primary/10 text-primary border-0">
+                      {doctor.speciality}
+                    </Badge>
+                    <StarRating rating={doctor.rating} />
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusVariant(doctor.status)}`}>
+                      {doctor.status}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* ── Metric cards ─────────────────────────────────────────────── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {/* Total patients — from getDoctorPatientsQuery */}
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -146,30 +195,21 @@ export default function DoctorDetail() {
                       <Users className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{apiData.totalPatients}</p>
+                      <p className="text-2xl font-bold text-foreground">
+                        {patientsData.totalPatients}
+                      </p>
                       <p className="text-xs text-muted-foreground">Total Patients</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Experience — IDoctor.experience */}
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-secondary/10">
-                      <Calendar className="w-5 h-5 text-secondary" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-foreground">{doctorData.appointmentsToday}</p>
-                      <p className="text-xs text-muted-foreground">Today's Appointments</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-accent/10">
-                      <Clock className="w-5 h-5 text-accent" />
+                    <div className="p-2 rounded-lg bg-violet-500/10">
+                      <Clock className="w-5 h-5 text-violet-500" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-foreground">{doctor.experience}</p>
@@ -178,14 +218,35 @@ export default function DoctorDetail() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Next available — IDoctor.nextAvailable */}
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-success/10">
-                      <DollarSign className="w-5 h-5 text-success" />
+                    <div className="p-2 rounded-lg bg-emerald-500/10">
+                      <Calendar className="w-5 h-5 text-emerald-500" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">${doctor.consultationFee}</p>
+                      <p className="text-lg font-bold text-foreground leading-tight">
+                        {doctor.nextAvailable}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Next Available</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Consultation fee — IDoctor.consultationFee */}
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-green-500/10">
+                      <DollarSign className="w-5 h-5 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">
+                        ${doctor.consultationFee}
+                      </p>
                       <p className="text-xs text-muted-foreground">Consultation Fee</p>
                     </div>
                   </div>
@@ -193,133 +254,184 @@ export default function DoctorDetail() {
               </Card>
             </div>
 
+            {/* ── Main grid ────────────────────────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>About</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{doctorData.bio}</p>
-                  </CardContent>
-                </Card>
 
+              {/* Left / main column */}
+              <div className="lg:col-span-2 space-y-6">
+
+                {/* Education — IDoctor.education */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <GraduationCap className="w-5 h-5 text-primary" />
-                      Education & Achievements
+                      <BadgeCheck className="w-5 h-5 text-primary" />
+                      Education
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <h4 className="font-medium text-foreground mb-2">Education</h4>
-                      <p className="text-sm text-muted-foreground">{doctor.education}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-foreground mb-2">Awards</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {doctorData.awards.map(award => (
-                          <Badge key={award} variant="secondary" className="gap-1">
-                            <Award className="w-3 h-3" />
-                            {award}
-                          </Badge>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {doctor.education}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Patient distribution chart — driven by availableDays + totalPatients */}
+                {weeklyChartData.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Patient Distribution by Day</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Estimated from {patientsData.totalPatients} total patients across working days
+                      </p>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={weeklyChartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis
+                            dataKey="day"
+                            stroke="hsl(var(--muted-foreground))"
+                            fontSize={12}
+                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                          />
+                          <YAxis
+                            stroke="hsl(var(--muted-foreground))"
+                            fontSize={12}
+                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              background: 'hsl(var(--card))',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px',
+                              color: 'hsl(var(--foreground))',
+                            }}
+                          />
+                          <Bar dataKey="patients" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Recent patients list — from getDoctorPatientsQuery */}
+                {patientsData.patients && patientsData.patients.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Patients</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {patientsData.patients.slice(0, 8).map((patient: any, index: number) => (
+                          <div
+                            key={patient._id ?? index}
+                            className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
+                                {(patient.name ?? patient.username ?? '?')[0].toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-foreground">
+                                  {patient.name ?? patient.username}
+                                </p>
+                                {patient.email && (
+                                  <p className="text-xs text-muted-foreground">{patient.email}</p>
+                                )}
+                              </div>
+                            </div>
+                            {patient.appointmentType && (
+                              <Badge variant="outline" className="text-xs">
+                                {patient.appointmentType}
+                              </Badge>
+                            )}
+                          </div>
                         ))}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Weekly Appointments</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={weeklyAppointments}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(210, 20%, 90%)" />
-                        <XAxis dataKey="day" stroke="hsl(215, 15%, 45%)" fontSize={12} />
-                        <YAxis stroke="hsl(215, 15%, 45%)" fontSize={12} />
-                        <Tooltip />
-                        <Bar dataKey="appointments" fill="hsl(205, 85%, 45%)" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
 
+              {/* Right sidebar */}
               <div className="space-y-6">
+
+                {/* Contact — IDoctor.email / phone / hospital */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Contact Information</CardTitle>
+                    <CardTitle>Contact</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <Mail className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{doctor.email}</span>
+                      <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm break-all">{doctor.email}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
                       <span className="text-sm">{doctor.phone}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Building2 className="w-4 h-4 text-muted-foreground" />
+                      <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
                       <span className="text-sm">{doctor.hospital}</span>
                     </div>
                   </CardContent>
                 </Card>
 
+                {/* Availability — IDoctor.availableDays + nextAvailable */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Availability</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-4">
+                    {doctor.availableDays && doctor.availableDays.length > 0 && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">Working Days</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {doctor.availableDays.map((day: string) => (
+                            <Badge key={day} variant="outline" className="text-xs">
+                              {day.slice(0, 3)}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Working Days</p>
-                      <div className="flex flex-wrap gap-1">
-                        {doctor.availableDays.map(day => (
-                          <Badge key={day} variant="outline" className="text-xs">{day.slice(0, 3)}</Badge>
-                        ))}
+                      <p className="text-xs text-muted-foreground mb-1">Next Available Slot</p>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+                        <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                          {doctor.nextAvailable}
+                        </p>
                       </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Hours</p>
-                      <p className="font-medium">{doctorData.consultationHours}</p>
-                    </div>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Today's Schedule</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {upcomingAppointments.map((apt, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{apt.patient}</p>
-                            <p className="text-xs text-muted-foreground">{apt.type}</p>
-                          </div>
-                          <Badge variant="outline">{apt.time}</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
+                {/* Quick info — IDoctor.licenseNumber / doctorCode / role */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Quick Info</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">License</span>
-                      <span className="font-medium text-sm">{doctor.licenseNumber}</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Doctor Code</span>
+                      <span className="text-sm font-medium">{patientsData.doctorCode}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Languages</span>
-                      <span className="font-medium text-sm">{doctorData.languages.join(', ')}</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">License</span>
+                      <span className="text-sm font-medium font-mono">{doctor.licenseNumber}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Speciality</span>
+                      <span className="text-sm font-medium">{doctor.speciality}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Role</span>
+                      <span className="text-sm font-medium capitalize">{doctor.role}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Rating</span>
+                      <span className="text-sm font-medium">{doctor.rating} / 5</span>
                     </div>
                   </CardContent>
                 </Card>

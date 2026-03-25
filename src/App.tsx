@@ -5,10 +5,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute, PublicRoute } from "@/components/ProtectedRoute";
-import { Loader2 } from "lucide-react";
 import { Provider } from "react-redux";
 import { persistor, store } from "./redux/store";
 import { PersistGate } from "redux-persist/integration/react";
+import { PageLoader } from "./components/PageLoader";
 
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -36,6 +36,8 @@ const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const DoctorAppointments = lazy(
   () => import("./pages/doctor/DoctorAppointments")
 );
+
+const DoctorAppointmentsView = lazy(() => import("./pages/doctor/DoctorAppointmentsView"));
 const DoctorPatients = lazy(() => import("./pages/doctor/DoctorPatients"));
 const DoctorProfile = lazy(() => import("./pages/doctor/DoctorProfile"));
 const PatientDetail = lazy(() => import("./pages/doctor/PatientDetails/PatientDetail"));
@@ -53,16 +55,7 @@ const TodayPatientsPage = lazy(()=> import("./components/TodayPatientsPage"));
 
 const queryClient = new QueryClient();
 
-function PageLoader() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    </div>
-  );
-}
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -201,6 +194,15 @@ const App = () => (
 
 
                       {/* Other doctor routes */}
+                                       <Route 
+                        path="/doctor/appointments/:filter" 
+                        element={
+                          <ProtectedRoute allowedRoles={["doctor"]}>
+                            <DoctorAppointmentsView />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
                       <Route
                         path="/doctor/patients"
                         element={
