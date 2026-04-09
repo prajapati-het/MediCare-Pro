@@ -24,7 +24,7 @@ const hospitals: Hospital[] = [
   },
   {
     id: 2,
-    name: 'Metro Health Center',
+    name: 'Metro General Hospital',
     location: 'Westside Avenue',
     description: 'Specialized in cardiac care and emergency services with 24/7 trauma center.',
     beds: 320,
@@ -33,7 +33,7 @@ const hospitals: Hospital[] = [
   },
   {
     id: 3,
-    name: 'Sunrise Medical Complex',
+    name: 'Sunrise Medical Center',
     location: 'Eastside Boulevard',
     description: 'Family-focused healthcare with pediatric and maternity excellence.',
     beds: 280,
@@ -45,6 +45,15 @@ const hospitals: Hospital[] = [
     name: 'Valley Regional Hospital',
     location: 'Northern Hills',
     description: 'Community hospital providing accessible care to suburban regions.',
+    beds: 200,
+    staff: 540,
+    image: 'https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200&h=600&fit=crop',
+  },
+  {
+    id: 5,
+    name: 'Costal Care Hospital',
+    location: 'Northern Valley',
+    description: 'A modern healthcare facility offering specialized treatments in orthopedics, neurology, and physiotherapy with a focus on recovery and rehabilitation.',
     beds: 200,
     staff: 540,
     image: 'https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200&h=600&fit=crop',
