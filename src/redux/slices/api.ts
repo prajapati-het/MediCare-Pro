@@ -273,6 +273,11 @@ export const api = createApi({
       providesTags: ["Staff"],
     }),
 
+    getStaffById: builder.query<AddStaffRequest, string>({
+      query: (id) => `staff/${id}`,
+      providesTags: (_result, _error, id) => [{ type: "Staff", id }],
+    }),
+
     addStaff: builder.mutation<AddStaffRequest, Partial<AddStaffRequest>>({
       query: (body) => ({
         url: "staff",
@@ -435,6 +440,7 @@ export const {
 
 
   useAddStaffMutation,
+  useGetStaffByIdQuery,
   useDeleteStaffMutation,
   useGetStaffQuery,
   useUpdateStaffMutation,

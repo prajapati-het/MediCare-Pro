@@ -311,7 +311,7 @@ export default function Dashboard() {
   // Admin: today's appointments hospital-wide
   // If your backend returns the array under a different key, e.g. appointmentsList:
 const adminTodayAppointments = useMemo(() => {
-  const raw = (adminStats as any)?.appointmentsList ?? adminStats?.todayAppointments;
+  const raw = adminStats?.appointmentsToday;
   return Array.isArray(raw) ? raw : [];
 }, [adminStats]);
   // Admin: department stats

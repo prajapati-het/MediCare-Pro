@@ -59,10 +59,10 @@ const specialties = [
 
 const hospitals = [
   'City General Hospital',
-  'Metro Health Center',
-  'Sunrise Medical Complex',
+  'Metro General Hospital',
+  'Sunrise Medical Center',
   'Valley Regional Hospital',
-  'Coastal Care Medical'
+  'Coastal Care Hospital'
 ];
 
 const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];

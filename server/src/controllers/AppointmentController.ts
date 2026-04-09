@@ -117,7 +117,7 @@ export const getAppointmentsWithPatientInfo = async (req: Request, res: Response
       const patient = patientMap.get(apt.patientId);
       return {
         ...apt.toObject(),
-        patientName: patient?.name ?? "—",
+        patientName: patient?.name ?? apt.patientName,
         condition: patient?.condition ?? "—",
         age: patient?.age ?? "—",
         height: patient?.vitals?.height ?? "—",

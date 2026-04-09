@@ -46,9 +46,14 @@ export const getAdminStats = async (req: Request, res: Response) => {
 
     const doctorCodes = hospitalDoctors.map(d => d.doctorCode); // number[]
 
+  
+
+
     // ── 3. Date helpers ───────────────────────────────────────────────────────
     const now      = new Date();
     const todayStr = now.toISOString().split('T')[0]; // "2026-03-10"
+
+    console.log("todayStr:", todayStr);
 
     // String boundaries for Appointment.date (stored as "YYYY-MM-DD" string)
     const todayStart = todayStr; // $gte
@@ -187,6 +192,7 @@ export const getAdminStats = async (req: Request, res: Response) => {
       type:       apt.type ?? '—',
     }));
 
+
     // ── 10. Department-wise stats ─────────────────────────────────────────────
     const uniqueSpecialities = [
       ...new Set(hospitalDoctors.map(d => d.speciality).filter(Boolean)),
@@ -208,6 +214,8 @@ export const getAdminStats = async (req: Request, res: Response) => {
           }),
         ]);
 
+        
+
         return {
           department:        dept,
           doctors:           deptDoctors.length,
@@ -217,6 +225,8 @@ export const getAdminStats = async (req: Request, res: Response) => {
         };
       })
     );
+
+    console.log("TotalPatients : ",       totalPatients)
 
     // ── 11. Response ──────────────────────────────────────────────────────────
     return res.json({

@@ -60,10 +60,10 @@ const facilityStatuses = ['Operational', 'Maintenance', 'Closed'] as const;
 
 const hospitals = [
   { id: 'city-general', name: 'City General Hospital' },
-  { id: 'metro-health', name: 'Metro Health Center' },
-  { id: 'sunrise-medical', name: 'Sunrise Medical Complex' },
+  { id: 'metro-general', name: 'Metro General Hospital' },
+  { id: 'sunrise-medical', name: 'Sunrise Medical Center' },
   { id: 'valley-regional', name: 'Valley Regional Hospital' },
-  { id: 'coastal-care', name: 'Coastal Care Medical' },
+  { id: 'coastal-care', name: 'Coastal Care Hospital' },
 ];
 
 export default function AddFacility() {
@@ -145,7 +145,7 @@ export default function AddFacility() {
           >
             {/* Page Header */}
             <div className="flex items-center gap-4 mb-8">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/facilities')}>
+              <Button variant="ghost" size="icon" onClick={() => navigate('/admin/facilities')}>
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div>

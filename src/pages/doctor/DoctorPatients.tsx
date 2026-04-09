@@ -320,9 +320,6 @@ const [updatePatient] = useUpdatePatientMutation();
                                 <Button variant="outline" size="sm" className="flex-1 h-7 text-xs gap-1" onClick={() => navigate(`/doctor/patients/${patient.id}`)}>
                                   <Eye className="w-3 h-3" /> View
                                 </Button>
-                                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/doctor/patients/${patient.id}/records`)}>
-                                  <FileText className="w-3 h-3" />
-                                </Button>
                                 <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/doctor/${user.id}/patients/${patient.id}/bills`)}>
                                   <Receipt className="w-3 h-3" />
                                 </Button>

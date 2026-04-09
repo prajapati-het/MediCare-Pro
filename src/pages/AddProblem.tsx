@@ -77,10 +77,10 @@ const departments = [
 ];
 const hospitals = [
   { id: 'city-general', name: 'City General Hospital' },
-  { id: 'metro-health', name: 'Metro Health Center' },
-  { id: 'sunrise-medical', name: 'Sunrise Medical Complex' },
+  { id: 'metro-general', name: 'Metro General Hospital' },
+  { id: 'sunrise-medical', name: 'Sunrise Medical Center' },
   { id: 'valley-regional', name: 'Valley Regional Hospital' },
-  { id: 'coastal-care', name: 'Coastal Care Medical' },
+  { id: 'coastal-care', name: 'Coastal Care Hospital' },
 ];
 
 const priorityColors: Record<string, string> = {
@@ -133,7 +133,7 @@ export default function AddProblem() {
       setIsLoading(true);
       await addProblem(formData as AddProblemPayload).unwrap();
       toast({ title: "Success", description: "Problem reported successfully" });
-      navigate("/problems");
+      navigate("/admin/problems");
     } catch (err: any) {
       toast({
         variant: "destructive",

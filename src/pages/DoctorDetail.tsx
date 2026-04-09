@@ -28,7 +28,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { useGetDoctorDetailsQuery, useGetDoctorPatientsQuery } from '@/redux/slices/api';
+import { useGetAppointmentsWithPatientInfoQuery, useGetDoctorDetailsQuery, useGetDoctorPatientsQuery } from '@/redux/slices/api';
+import { useMemo } from 'react';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -67,20 +68,73 @@ export default function DoctorDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
+   console.log(id)
+
+    const {
+    data: doctor,
+    isLoading,
+    isError,
+  } = useGetDoctorDetailsQuery(id!, { skip: !id });
+
   const {
     data: patientsData,
     isLoading: dpLoading,
     isError: dpError,
   } = useGetDoctorPatientsQuery(id!, { skip: !id });
 
-  const {
-    data: doctor,
-    isLoading,
-    isError,
-  } = useGetDoctorDetailsQuery(id!, { skip: !id });
+   const {
+  data: appointments,
+  isLoading: apptLoading,
+  isError: apptError,
+} = useGetAppointmentsWithPatientInfoQuery(patientsData?.doctorCode, {
+  skip: !patientsData?.doctorCode,
+});
 
-  // ── loading / error states ──────────────────────────────────────────────────
-  if (isLoading || dpLoading) {
+
+
+ 
+
+  
+  console.log(doctor)
+
+
+ 
+
+  
+
+  // Build a simple weekly chart from patientsData if the backend ever returns
+  // appointment counts per day — currently we just show total patients split
+  // evenly across the doctor's availableDays as a visual placeholder driven
+  // entirely by real data (availableDays + totalPatients).
+const weeklyChartData = useMemo(() => {
+  if (!appointments || appointments.length === 0) return [];
+
+  const daysMap: Record<string, number> = {
+    Sun: 0,
+    Mon: 0,
+    Tue: 0,
+    Wed: 0,
+    Thu: 0,
+    Fri: 0,
+    Sat: 0,
+  };
+
+  appointments.forEach((appt) => {
+    const date = new Date(appt.date);
+    const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+    if (daysMap[day] !== undefined) {
+      daysMap[day]++;
+    }
+  });
+
+  return Object.entries(daysMap).map(([day, count]) => ({
+    day,
+    patients: count,
+  }));
+}, [appointments]);
+
+
+  if (isLoading || dpLoading || apptLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -97,7 +151,7 @@ export default function DoctorDetail() {
     );
   }
 
-  if (isError || dpError || !doctor || !patientsData) {
+  if (isError || dpError || !doctor || !patientsData || apptError) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -119,7 +173,7 @@ export default function DoctorDetail() {
     );
   }
 
-  // ── derived values (no hardcoded fallbacks) ─────────────────────────────────
+   // ── derived values (no hardcoded fallbacks) ─────────────────────────────────
   const initials = doctor.username
     ? doctor.username
         .split(' ')
@@ -129,17 +183,6 @@ export default function DoctorDetail() {
         .toUpperCase()
     : 'DR';
 
-  // Build a simple weekly chart from patientsData if the backend ever returns
-  // appointment counts per day — currently we just show total patients split
-  // evenly across the doctor's availableDays as a visual placeholder driven
-  // entirely by real data (availableDays + totalPatients).
-  const weeklyChartData =
-    doctor.availableDays && doctor.availableDays.length > 0 && patientsData.totalPatients > 0
-      ? doctor.availableDays.map((day: string) => ({
-          day: day.slice(0, 3),
-          patients: Math.round(patientsData.totalPatients / doctor.availableDays.length),
-        }))
-      : [];
 
   return (
     <div className="min-h-screen bg-background">

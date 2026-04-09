@@ -379,6 +379,15 @@ export interface AdminStatsResponse {
   todayAppointments: number;
   upcomingAppointments: UpcomingAppointmentStat[];
 
+  appointmentsToday: {
+    patient: string;
+    time: string;
+    department: string;
+    doctor: string;
+    status: string;
+    type: string;
+  }[];
+
   // ── Weekly Stats ───────────────────────
   weeklyStats: WeeklyStat[];   // e.g., patients, appointments, staff, beds per day
 

@@ -22,6 +22,18 @@ export const getAllStaff = async (req: Request, res: Response) => {
   }
 };
 
+export const getStaffById = async (req: Request, res: Response) => {
+  try {
+    const staff = await Staff.findOne({ id: Number(req.params.id) });
+    if (!staff) {
+      return res.status(404).json({ message: "Staff member not found" });
+    }
+    res.status(200).json(staff);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch staff member" });
+  }
+};
+
 export const createStaff = async (req: Request, res: Response) => {
   try {
     const {

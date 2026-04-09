@@ -46,6 +46,8 @@ export default function TodayPatientsPage() {
   const { data: appointments = [], isLoading } =
     useGetAppointmentsWithPatientInfoQuery(doctorCode);
 
+    console.log(appointments)
+
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus[]>([]);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
@@ -170,6 +172,8 @@ export default function TodayPatientsPage() {
       return true;
     });
   }, [effectiveDate, doctorCode, searchParams, appointments, tagFilter, statusFilter, DAY_VIEW_ALLOWED_STATUSES]);
+
+  console.log(filteredAppointments)
 
   const pageTitle = useMemo(() => {
     if (!effectiveDate) return "";
